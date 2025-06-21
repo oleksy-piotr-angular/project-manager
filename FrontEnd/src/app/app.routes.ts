@@ -11,12 +11,18 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    //TODO loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    loadComponent: () =>
+      import('./pages/dashboard/dashboard.component').then(
+        (m) => m.DashboardComponent
+      ),
     canActivate: [authGuard],
   },
   {
     path: 'projects/:id',
-    //TODO loadComponent: () => import('./pages/project-details/project-details.component').then(m => m.ProjectDetailsComponent),
+    loadComponent: () =>
+      import('./pages/project-details/project-details.component').then(
+        (m) => m.ProjectDetailsComponent
+      ),
     canActivate: [authGuard],
   },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
