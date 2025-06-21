@@ -1,28 +1,26 @@
 <div class="project-details-page container">
   <button class="btn-back" (click)="router.navigate(['/dashboard'])">
-    ← Powrót do projektów
+    ← Back to Projects
   </button>
 
-  <ng-container *ngIf="currentProject()">
-    <h2>{{ currentProject()!.name }}</h2>
-    <p class="project-description">{{ currentProject()!.description }}</p>
-    <div class="project-status status-{{ currentProject()!.status }}">
-      Status: {{ getStatusDisplayName(currentProject()!.status) }}
+  <ng-container *ngIf="currentProject(); let project">
+    <h2>{{ project.name }}</h2>
+    <p class="project-description">{{ project.description }}</p>
+    <div class="project-status status-{{ project.status }}">
+      Status: {{ getStatusDisplayName(project.status) }}
     </div>
 
     <div class="project-stats">
-      <p>Łącznie zadań: {{ totalTasks() }}</p>
+      <p>Total Tasks: {{ totalTasks() }}</p>
       <p>
-        Ukończone zadania: {{ completedTasks() }} ({{
-          completionPercentage()
-        }}%)
+        Completed Tasks: {{ completedTasks() }} ({{ completionPercentage() }}%)
       </p>
     </div>
 
-    <app-task-list [projectId]="currentProject()!.id"></app-task-list>
+    <app-task-list [projectId]="project.id"></app-task-list>
   </ng-container>
 
   <div *ngIf="!currentProject()" class="loading-message">
-    Ładowanie szczegółów projektu...
+    Loading project details...
   </div>
 </div>

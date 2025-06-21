@@ -1,1 +1,54 @@
-<p>task-list works!</p>
+<div class="task-list-container">
+  <h4>Zadania:</h4>
+  <div class="filters">
+    <input
+      type="text"
+      [formControl]="filterControl"
+      placeholder="Filtruj zadania..."
+      class="filter-input"
+    />
+    <select [formControl]="statusFilterControl" class="filter-select">
+      <option value="all">Wszystkie statusy</option>
+      <option value="todo">Do zrobienia</option>
+      <option value="in_progress">W toku</option>
+      <option value="done">Ukończone</option>
+    </select>
+    <button class="btn-primary" (click)="openCreateTaskForm()">
+      Dodaj Zadanie
+    </button>
+  </div>
+
+  <div *ngIf="taskService.filteredTasks().length === 0" class="no-tasks">
+    Brak zadań w tym projekcie.
+  </div>
+
+  <ul class="task-items">
+    <li *ngFor="let task of taskService.filteredTasks()" class="task-item">
+      <div class="task-content">
+        <input
+          type="checkbox"
+          [checked]="task.status === 'done'"
+          (change)="toggleTaskStatus(task)"
+        />
+        <span [class.task-done]="task.status === 'done'">{{ task.title }}</span>
+        <p class="task-description">{{ task.description }}</p>
+        <div class="task-meta">
+          <span class="status status-{{ task.status }}">
+            {{ getStatusDisplayName(task.status) }}
+          </span>
+          <span *ngIf="task.dueDate">
+            | Termin: {{ task.dueDate | date : "shortDate" }}</span
+          >
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="btn-secondary btn-small" (click)="editTask(task.id)">
+          Edytuj
+        </button>
+        <button class="btn-error btn-small" (click)="deleteTask(task.id)">
+          Usuń
+        </button>
+      </div>
+    </li>
+  </ul>
+</div>
