@@ -1,1 +1,56 @@
-/* You can add global styles to this file, and also import other style files */
+@font-face {
+  font-family: "Roboto";
+  src: url("assets/fonts/roboto/static/Roboto-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url("assets/fonts/roboto/static/Roboto-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  font-family: "Roboto", sans-serif;
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --text-color: #333;
+  --background-color: #f8f9fa;
+  --border-color: #dee2e6;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  gap: 15px; // przykład
+  flex-wrap: wrap; // dla responsywności
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; // przykład
+}
+
+@import "styles/utilities";
