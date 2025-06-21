@@ -1,13 +1,15 @@
+@import "styles/utilities"; // <-- Import utilities
+
 @font-face {
   font-family: "Roboto";
-  src: url("assets/fonts/roboto/static/Roboto-Regular.ttf") format("truetype");
+  src: url("assets/fonts/roboto/Roboto-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: "Roboto";
-  src: url("assets/fonts/roboto/static/Roboto-Bold.ttf") format("truetype");
+  src: url("assets/fonts/roboto/Roboto-Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
 }
@@ -43,14 +45,12 @@ body {
 .flex-row {
   display: flex;
   flex-direction: row;
-  gap: 15px; // przykład
-  flex-wrap: wrap; // dla responsywności
+  gap: 15px;
+  flex-wrap: wrap;
 }
 
 .flex-col {
   display: flex;
   flex-direction: column;
-  gap: 15px; // przykład
+  gap: 15px;
 }
-
-@import "styles/utilities";
