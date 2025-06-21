@@ -5,12 +5,12 @@ import {
   ReactiveFormsModule,
   FormControl,
 } from '@angular/forms';
-import { NgIf, NgClass } from '@angular/common';
+//ToDO import { NgIf, NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-input-field',
   standalone: true,
-  imports: [NgIf, NgClass, ReactiveFormsModule], // <-- 'NgClass', 'NgIf' will be used later
+  imports: [/* NgIf, NgClass, */ ReactiveFormsModule], // <-- 'NgClass', 'NgIf' will be used later
   templateUrl: './input-field.component.html',
   styleUrls: ['./input-field.component.scss'],
   providers: [
