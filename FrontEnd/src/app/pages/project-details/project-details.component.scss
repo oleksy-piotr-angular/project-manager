@@ -1,0 +1,69 @@
+@import "src/styles/utilities";
+
+.project-details-page {
+  padding-top: 30px;
+}
+
+.btn-back {
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  &:hover {
+    background-color: var(--primary-color);
+    color: white;
+  }
+}
+
+h2 {
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.project-description {
+  color: var(--text-color);
+  margin-bottom: 15px;
+}
+
+.project-status {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: inline-block;
+  color: white;
+  margin-bottom: 20px;
+}
+.status-active {
+  background-color: var(--success-color);
+}
+.status-completed {
+  background-color: var(--secondary-color);
+}
+.status-on_hold {
+  background-color: orange;
+}
+
+.project-stats {
+  background-color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  @include shadow-sm();
+  margin-bottom: 30px;
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+.project-stats p {
+  margin: 0;
+  font-weight: bold;
+  color: var(--text-color);
+}
+.loading-message {
+  text-align: center;
+  padding: 50px;
+  color: var(--secondary-color);
+}
