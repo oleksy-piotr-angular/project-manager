@@ -1,0 +1,13 @@
+// Define all base colors as Sass variables
+$primary: #007bff;
+$secondary: #6c757d;
+$success: #28a745;
+$error: #dc3545;
+$text: #333;
+$background: #f8f9fa;
+$border: #dee2e6;
+$warning: #ffc107; // Adding a warning color for example
+
+// Derived colors using Sass functions (these should now work correctly)
+$primary-dark: darken($primary, 10%);
+$error-dark: darken($error, 10%);

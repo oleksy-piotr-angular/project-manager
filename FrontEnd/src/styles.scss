@@ -1,28 +1,34 @@
-@import "styles/utilities"; // <-- Import utilities
+@import "styles/variables"; // Import variables first
+@import "styles/utilities"; // Then utilities, which uses variables
 
 @font-face {
   font-family: "Roboto";
-  src: url("assets/fonts/roboto/Roboto-Regular.ttf") format("truetype");
+  src: url("assets/fonts/roboto/static/Roboto-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: "Roboto";
-  src: url("assets/fonts/roboto/Roboto-Bold.ttf") format("truetype");
+  src: url("assets/fonts/roboto/static/Roboto-Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
 }
 
 :root {
   font-family: "Roboto", sans-serif;
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
-  --success-color: #28a745;
-  --error-color: #dc3545;
-  --text-color: #333;
-  --background-color: #f8f9fa;
-  --border-color: #dee2e6;
+  // Define CSS custom properties using Sass variables for consistency
+  --primary-color: #{$primary};
+  --secondary-color: #{$secondary};
+  --success-color: #{$success};
+  --error-color: #{$error};
+  --text-color: #{$text};
+  --background-color: #{$background};
+  --border-color: #{$border};
+
+  // If you need CSS variables for the darkened versions, define them here too
+  --primary-color-dark: #{$primary-dark};
+  --error-color-dark: #{$error-dark};
 }
 
 body {

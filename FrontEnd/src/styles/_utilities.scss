@@ -1,3 +1,5 @@
+@import "variables"; // Import your new variables file here
+
 @mixin shadow-sm {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
@@ -9,34 +11,37 @@
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.2s ease;
-  white-space: nowrap; // To prevent button text from wrapping
+  white-space: nowrap;
 }
 
 .btn-primary {
   @include btn-base;
-  background-color: var(--primary-color);
+  background-color: $primary; // Use Sass variable
   color: white;
   &:hover {
-    background-color: darken(var(--primary-color), 10%);
+    background-color: $primary-dark; // Use derived Sass variable
   }
 }
 
 .btn-secondary {
   @include btn-base;
-  background-color: #f0f0f0;
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
+  background-color: $background; // Use Sass variable
+  color: $text; // Use Sass variable
+  border: 1px solid $border; // Use Sass variable
   &:hover {
-    background-color: #e0e0e0;
+    background-color: lighten(
+      $background,
+      5%
+    ); // Example of using another Sass function
   }
 }
 
 .btn-error {
   @include btn-base;
-  background-color: var(--error-color);
+  background-color: $error; // Use Sass variable
   color: white;
   &:hover {
-    background-color: darken(var(--error-color), 10%);
+    background-color: $error-dark; // Use derived Sass variable
   }
 }
 
