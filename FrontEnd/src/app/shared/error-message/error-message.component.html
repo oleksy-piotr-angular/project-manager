@@ -1,0 +1,26 @@
+<div
+  *ngIf="control && control.invalid && (control.dirty || control.touched)"
+  class="error-message"
+>
+  <ng-container *ngIf="control.errors?.['required']"
+    >To pole jest wymagane.</ng-container
+  >
+  <ng-container *ngIf="control.errors?.['email']"
+    >Wprowadź prawidłowy adres e-mail.</ng-container
+  >
+  <ng-container *ngIf="control.errors?.['customEmail']"
+    >Nieprawidłowy format e-mail.</ng-container
+  >
+  <ng-container *ngIf="control.errors?.['minlength']"
+    >Wymagane minimum
+    {{ control.errors?.['minlength'].requiredLength }} znaków.</ng-container
+  >
+  <ng-container *ngIf="control.errors?.['maxlength']"
+    >Maksimum
+    {{ control.errors?.['maxlength'].requiredLength }} znaków.</ng-container
+  >
+  <ng-container
+    *ngIf="control.errors?.['pattern'] && !control.errors?.['customEmail']"
+    >Nieprawidłowy format.</ng-container
+  >
+</div>

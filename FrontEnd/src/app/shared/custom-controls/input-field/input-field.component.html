@@ -1,0 +1,11 @@
+<div class="input-group">
+  <label [for]="id">{{ label }}</label>
+  <input
+    [type]="type"
+    [id]="id"
+    [placeholder]="placeholder"
+    [formControl]="control"
+    [class.is-invalid]="control.invalid && (control.dirty || control.touched)"
+  />
+  <ng-content select="app-error-message"></ng-content>
+</div>
