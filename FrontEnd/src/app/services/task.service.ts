@@ -11,6 +11,34 @@ export class TaskService {
   private _tasks = signal<Task[]>([]);
   tasks = this._tasks.asReadonly();
 
+  // Signals for filtering tasks - added based on ProjectService
+  private _filterText = signal<string>('');
+  private _statusFilter = signal<'all' | 'todo' | 'in_progress' | 'done'>(
+    'all'
+  );
+
+  setFilterText(text: string): void {
+    this._filterText.set(text);
+  }
+
+  setStatusFilter(status: 'all' | 'todo' | 'in_progress' | 'done'): void {
+    this._statusFilter.set(status);
+  }
+
+  filteredTasks = computed(() => {
+    const allTasks = this.tasks();
+    const text = this._filterText().toLowerCase();
+    const status = this._statusFilter();
+
+    return allTasks.filter((task) => {
+      const matchesText =
+        task.title.toLowerCase().includes(text) ||
+        task.description.toLowerCase().includes(text);
+      const matchesStatus = status === 'all' || task.status === status;
+      return matchesText && matchesStatus;
+    });
+  });
+
   constructor(private apiService: ApiService) {}
 
   loadTasksForProject(projectId: string): Observable<Task[]> {
