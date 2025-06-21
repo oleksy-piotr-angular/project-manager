@@ -16,11 +16,11 @@
     <p *ngIf="!authService.currentUser()">Ładowanie danych użytkownika...</p>
 
     <div *ngIf="showProjectForm()">
-      <!--ToDo <app-project-form
+      <app-project-form
         [project]="editingProject()"
         (save)="onProjectFormSave()"
         (cancel)="onProjectFormCancel()"
-      ></app-project-form> -->
+      ></app-project-form>
     </div>
     <div *ngIf="!showProjectForm()">
       <h3>Twoje Projekty</h3>
