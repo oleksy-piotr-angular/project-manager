@@ -5,6 +5,7 @@ import { NgIf } from '@angular/common';
 import { ProjectListComponent } from '../../components/project-list/project-list.component';
 import { ProjectFormComponent } from '../../components/project-form/project-form.component';
 import { Project } from '../../models/project.model';
+import { ProjectService } from '../../services/project.service'; // NEW: Import ProjectService
 
 @Component({
   selector: 'app-dashboard',
@@ -16,6 +17,7 @@ import { Project } from '../../models/project.model';
 export class DashboardComponent {
   authService = inject(AuthService);
   private router = inject(Router);
+  private projectService = inject(ProjectService); // NEW: Inject ProjectService
 
   showProjectForm = signal(false);
   editingProject = signal<Project | undefined>(undefined);
@@ -49,6 +51,12 @@ export class DashboardComponent {
 
   onProjectFormSave(): void {
     this.showProjectForm.set(false);
+    // After saving, refresh the project list if we are on the dashboard.
+    // If the list is in ProjectService, it will update automatically.
+    const userId = this.authService.currentUser()?.id;
+    if (userId) {
+      this.projectService.loadProjects(userId).subscribe();
+    }
   }
 
   onProjectFormCancel(): void {
