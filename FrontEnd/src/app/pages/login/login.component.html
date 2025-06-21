@@ -1,0 +1,40 @@
+<div class="login-page">
+  <div class="login-container">
+    <h2>Logowanie</h2>
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <app-input-field
+        label="Adres E-mail"
+        type="email"
+        id="email"
+        placeholder="Podaj swój adres e-mail"
+        formControlName="email"
+      >
+        <app-error-message
+          [control]="loginForm.get('email')"
+        ></app-error-message>
+      </app-input-field>
+
+      <app-input-field
+        label="Hasło"
+        type="password"
+        id="password"
+        placeholder="Podaj swoje hasło"
+        formControlName="password"
+      >
+        <app-error-message
+          [control]="loginForm.get('password')"
+        ></app-error-message>
+      </app-input-field>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="loginForm.invalid || isLoading"
+      >
+        {{ isLoading ? "Logowanie..." : "Zaloguj się" }}
+      </button>
+
+      <div *ngIf="loginError" class="login-error">{{ loginError }}</div>
+    </form>
+  </div>
+</div>
