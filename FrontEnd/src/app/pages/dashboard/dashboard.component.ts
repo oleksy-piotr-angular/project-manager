@@ -2,14 +2,14 @@ import { Component, inject, effect, signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { NgIf } from '@angular/common';
-//ToDo import { ProjectListComponent } from '../../components/project-list/project-list.component';
+import { ProjectListComponent } from '../../components/project-list/project-list.component';
 //ToDo import { ProjectFormComponent } from '../../components/project-form/project-form.component';
 import { Project } from '../../models/project.model';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NgIf /*ToDo ProjectListComponent, ProjectFormComponent */],
+  imports: [NgIf, ProjectListComponent /*, ProjectFormComponent */],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })

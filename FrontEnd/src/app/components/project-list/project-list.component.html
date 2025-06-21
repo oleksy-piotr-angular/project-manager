@@ -1,0 +1,46 @@
+<div class="project-list-container">
+  <div class="filters">
+    <input
+      type="text"
+      [formControl]="filterControl"
+      placeholder="Filtruj projekty..."
+      class="filter-input"
+    />
+    <select [formControl]="statusFilterControl" class="filter-select">
+      <option value="all">Wszystkie statusy</option>
+      <option value="active">Aktywne</option>
+      <option value="completed">Ukończone</option>
+      <option value="on_hold">Wstrzymane</option>
+    </select>
+    <button class="btn-primary" (click)="openCreateProjectForm()">
+      Dodaj Projekt
+    </button>
+  </div>
+
+  <div class="project-cards">
+    <div
+      *ngIf="projectService.filteredProjects().length === 0"
+      class="no-projects"
+    >
+      Brak projektów. Dodaj swój pierwszy projekt!
+    </div>
+    <div
+      *ngFor="let project of projectService.filteredProjects()"
+      class="project-card"
+    >
+      <h3>{{ project.name }}</h3>
+      <p>{{ project.description }}</p>
+      <div class="project-status status-{{ project.status }}">
+        Status: {{ getStatusDisplayName(project.status) }}
+      </div>
+      <div class="card-actions">
+        <button class="btn-secondary" (click)="editProject(project.id)">
+          Edytuj
+        </button>
+        <button class="btn-error" (click)="deleteProject(project.id)">
+          Usuń
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
