@@ -1,0 +1,30 @@
+<div class="dashboard-page">
+  <header class="navbar">
+    <h1>Platforma Projektów</h1>
+    <nav>
+      <button class="btn-secondary" (click)="logout()">Wyloguj</button>
+    </nav>
+  </header>
+  <div class="container">
+    <h2 *ngIf="authService.currentUser()">
+      Witaj, {{ authService.currentUser()?.name }}!
+    </h2>
+    <p *ngIf="authService.currentUser()">
+      Twój e-mail: {{ authService.currentUser()?.email }}
+    </p>
+
+    <p *ngIf="!authService.currentUser()">Ładowanie danych użytkownika...</p>
+
+    <div *ngIf="showProjectForm()">
+      <!--ToDo <app-project-form
+        [project]="editingProject()"
+        (save)="onProjectFormSave()"
+        (cancel)="onProjectFormCancel()"
+      ></app-project-form> -->
+    </div>
+    <div *ngIf="!showProjectForm()">
+      <h3>Twoje Projekty</h3>
+      <!--ToDo <app-project-list></app-project-list> -->
+    </div>
+  </div>
+</div>

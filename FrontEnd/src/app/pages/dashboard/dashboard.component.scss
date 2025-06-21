@@ -1,0 +1,29 @@
+@import "src/styles/utilities";
+
+.dashboard-page {
+  min-height: 100vh;
+  background-color: var(--background-color);
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 15px 20px;
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+}
+
+.container {
+  padding-top: 30px;
+}
+
+h2,
+h3 {
+  color: var(--primary-color);
+  margin-bottom: 20px;
+}
