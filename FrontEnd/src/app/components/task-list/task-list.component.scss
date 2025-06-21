@@ -1,0 +1,110 @@
+@import "src/styles/utilities";
+
+.task-list-container {
+  margin-top: 30px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+}
+
+h4 {
+  color: var(--primary-color);
+  margin-bottom: 20px;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.filter-input,
+.filter-select {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.task-items {
+  list-style: none;
+  padding: 0;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: white;
+  padding: 15px;
+  border-radius: 6px;
+  @include shadow-sm();
+  margin-bottom: 10px;
+  transition: transform 0.2s ease-in-out;
+}
+.task-item:hover {
+  transform: translateY(-2px);
+}
+
+.task-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.task-content input[type="checkbox"] {
+  margin-right: 10px;
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.task-done {
+  text-decoration: line-through;
+  color: var(--secondary-color);
+}
+
+.task-description {
+  font-size: 0.9rem;
+  color: var(--secondary-color);
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 5px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 15px;
+  flex-shrink: 0;
+}
+
+.status {
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+}
+.status-todo {
+  background-color: #f0ad4e;
+} /* Orange */
+.status-in_progress {
+  background-color: var(--primary-color);
+}
+.status-done {
+  background-color: var(--success-color);
+}
+
+.no-tasks {
+  text-align: center;
+  padding: 20px;
+  color: var(--secondary-color);
+  font-style: italic;
+}
