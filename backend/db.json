@@ -1,10 +1,16 @@
 {
   "users": [
     {
-      "id": "user1",
-      "email": "user@example.com",
+      "id": 1,
+      "username": "user1",
       "password": "password123",
-      "name": "Jan Kowalski"
+      "email": "user1@example.com"
+    },
+    {
+      "id": 2,
+      "username": "admin",
+      "password": "adminpassword",
+      "email": "admin@example.com"
     }
   ],
   "projects": [],
