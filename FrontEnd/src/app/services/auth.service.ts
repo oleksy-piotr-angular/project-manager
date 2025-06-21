@@ -1,10 +1,9 @@
-// src/app/services/auth.service.ts
 import { Injectable, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import { LoginRequestDto, LoginResponseDto } from '../dtos/auth.dto';
 import { User } from '../models/user.model';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators'; // Dodaj 'map'
+import { Observable, of } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
 import { UserMapper } from '../mappers/user.mapper';
 
 @Injectable({
@@ -24,35 +23,30 @@ export class AuthService {
     if (token && userId) {
       this.isAuthenticated.set(true);
       this.fetchCurrentUser(userId);
+    } else {
+      this.isAuthenticated.set(false);
+      this.currentUser.set(null);
     }
   }
 
   login(credentials: LoginRequestDto): Observable<LoginResponseDto | null> {
-    // Symulowana autentykacja: w prawdziwej aplikacji wysłałbyś to do API
+    // For JSON Server, a simple mock login: find user by email and password
     return this.apiService
-      .get<User[]>(
+      .get<any[]>(
         `users?email=<span class="math-inline">\{credentials\.email\}&password\=</span>{credentials.password}`
       )
       .pipe(
         map((users) => {
           if (users && users.length > 0) {
-            const user = users[0];
-            const token = `fake-jwt-token-${Math.random()
-              .toString(36)
-              .substring(2)}`;
+            const userDto = users[0];
+            const token = 'mock-jwt-token-' + userDto.id; // Generate a mock token
             localStorage.setItem('jwt_token', token);
-            localStorage.setItem('current_user_id', user.id);
+            localStorage.setItem('current_user_id', userDto.id);
             this.isAuthenticated.set(true);
-            this.currentUser.set(user);
-            // Zwróć symulowany token i ID użytkownika
-            return { token: token, userId: user.id } as LoginResponseDto;
-          } else {
-            this.isAuthenticated.set(false);
-            this.currentUser.set(null);
-            // Zwróć null zamiast rzucać błędem, aby strumień się nie zakończył od razu.
-            // Logika obsługi błędu będzie w komponentach.
-            return null;
+            this.currentUser.set(UserMapper.fromDto(userDto));
+            return { token: token, userId: userDto.id };
           }
+          return null;
         }),
         catchError((error) => {
           console.error('Login error:', error);
@@ -78,7 +72,7 @@ export class AuthService {
           if (userDto) {
             this.currentUser.set(UserMapper.fromDto(userDto));
           } else {
-            this.logout(); // Wyloguj, jeśli użytkownik nie istnieje
+            this.logout();
           }
         }),
         catchError((err) => {
