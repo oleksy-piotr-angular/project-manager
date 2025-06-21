@@ -1,18 +1,26 @@
 {
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "username": "user1",
       "password": "password123",
       "email": "user1@example.com"
     },
     {
-      "id": 2,
+      "id": "2",
       "username": "admin",
       "password": "adminpassword",
       "email": "admin@example.com"
     }
   ],
-  "projects": [],
+  "projects": [
+    {
+      "id": "748b",
+      "name": "sadasd",
+      "description": "asdasd",
+      "status": "active",
+      "userId": "1"
+    }
+  ],
   "tasks": []
 }

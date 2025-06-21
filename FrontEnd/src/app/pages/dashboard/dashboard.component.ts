@@ -5,7 +5,7 @@ import { NgIf } from '@angular/common';
 import { ProjectListComponent } from '../../components/project-list/project-list.component';
 import { ProjectFormComponent } from '../../components/project-form/project-form.component';
 import { Project } from '../../models/project.model';
-import { ProjectService } from '../../services/project.service'; // NEW: Import ProjectService
+import { ProjectService } from '../../services/project.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -17,7 +17,7 @@ import { ProjectService } from '../../services/project.service'; // NEW: Import 
 export class DashboardComponent {
   authService = inject(AuthService);
   private router = inject(Router);
-  private projectService = inject(ProjectService); // NEW: Inject ProjectService
+  private projectService = inject(ProjectService);
 
   showProjectForm = signal(false);
   editingProject = signal<Project | undefined>(undefined);
@@ -25,13 +25,18 @@ export class DashboardComponent {
   constructor() {
     effect(
       () => {
+        // This effect runs when isAuthenticated() changes.
+        // The loadUserFromLocalStorage() in AuthService constructor
+        // already handles loading the user if a token exists.
+        // Calling fetchCurrentUser here is redundant and causes the error.
         if (
           this.authService.isAuthenticated() &&
           !this.authService.currentUser()
         ) {
           const userId = localStorage.getItem('current_user_id');
           if (userId) {
-            this.authService.fetchCurrentUser(userId);
+            //! If you actually need to refresh the user data from the server,
+            //! and not just from localStorage, you would need to add an appropriate method
           }
         }
       },

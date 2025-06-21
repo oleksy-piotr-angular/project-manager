@@ -1,16 +1,16 @@
 import { Component, OnInit, inject, effect } from '@angular/core';
 import { ProjectService } from '../../services/project.service';
 import { AuthService } from '../../services/auth.service';
-import { NgFor, NgIf, AsyncPipe } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common'; // AsyncPipe nie jest już potrzebny, jeśli używasz toSignal
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop'; // Import toSignal
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { DashboardComponent } from '../../pages/dashboard/dashboard.component';
 
 @Component({
   selector: 'app-project-list',
   standalone: true,
-  imports: [NgFor, NgIf, /*ToDO AsyncPipe, */ ReactiveFormsModule],
+  imports: [NgFor, NgIf, ReactiveFormsModule],
   templateUrl: './project-list.component.html',
   styleUrls: ['./project-list.component.scss'],
 })
@@ -18,36 +18,22 @@ export class ProjectListComponent implements OnInit {
   projectService = inject(ProjectService);
   authService = inject(AuthService);
   private router = inject(Router);
-  private dashboardComponent = inject(DashboardComponent); // To handle form modal
+  private dashboardComponent = inject(DashboardComponent);
 
   filterControl = new FormControl('');
   statusFilterControl = new FormControl<
     'all' | 'active' | 'completed' | 'on_hold'
   >('all');
 
-  // --- FIX START ---
-  // Use toSignal to convert Observable from valueChanges to a Signal
-  // The `initialValue` for `toSignal` is important to match the initial state.
-  // For `filterControl`, it's an empty string.
-  // For `statusFilterControl`, it's 'all'.
   filterTextSignal = toSignal(this.filterControl.valueChanges, {
     initialValue: '',
   });
   statusFilterSignal = toSignal(this.statusFilterControl.valueChanges, {
     initialValue: 'all',
   });
-  // --- FIX END ---
 
-  ngOnInit(): void {
-    const currentUserId = this.authService.currentUser()?.id;
-    if (currentUserId) {
-      this.projectService.loadProjects(currentUserId).subscribe();
-    }
-
-    // --- FIX START ---
-    // Instead of subscribing and manually setting the signal, use effect
-    // to react to changes in the new `filterTextSignal` and `statusFilterSignal`.
-    // This ensures the service's signals are updated reactively.
+  constructor() {
+    // Effects that react to changes in filter signals and update ProjectService's internal signals
     effect(() => {
       this.projectService.filterText.set(this.filterTextSignal() || '');
     });
@@ -55,7 +41,43 @@ export class ProjectListComponent implements OnInit {
     effect(() => {
       this.projectService.statusFilter.set(this.statusFilterSignal() || 'all');
     });
-    // --- FIX END ---
+
+    // Effect to load projects based on user authentication status
+    // This effect ensures projects are loaded when a user logs in (userId becomes available)
+    // and cleared when a user logs out (userId becomes null).
+    effect(
+      () => {
+        const currentUserId = this.authService.currentUser()?.id;
+        if (currentUserId) {
+          console.log(
+            'User ID available. Loading projects for user:',
+            currentUserId
+          );
+          this.projectService.loadProjects(currentUserId).subscribe({
+            next: () =>
+              console.log(
+                'Projects loaded successfully for user:',
+                currentUserId
+              ),
+            error: (err) => console.error('Error loading projects:', err),
+          });
+        } else {
+          console.log(
+            'No user ID found or user logged out. Clearing projects.'
+          );
+          // *** KLUCZOWA ZMIANA: WYWOŁANIE METODY CLEARPROJECTS Z SERWISU ***
+          this.projectService.clearProjects();
+          // *** KONIEC ZMIANY ***
+        }
+      },
+      { allowSignalWrites: true }
+    );
+  }
+
+  ngOnInit(): void {
+    // This method can now be empty or contain other initialization logic
+    // that does not involve Angular's `effect()` function.
+    // Project loading is handled reactively by the effect in the constructor.
   }
 
   getStatusDisplayName(status: 'active' | 'completed' | 'on_hold'): string {
