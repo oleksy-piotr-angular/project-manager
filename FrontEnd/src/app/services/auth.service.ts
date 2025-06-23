@@ -12,38 +12,38 @@ import { UserMapper } from '../mappers/user.mapper';
   providedIn: 'root',
 })
 export class AuthService {
-  // Signals do zarządzania stanem uwierzytelnienia i bieżącego użytkownika
+  // Signals for managing authentication state and current user
   isAuthenticated = signal<boolean>(false);
   currentUser = signal<User | null>(null);
 
   constructor(private http: HttpClient, private apiService: ApiService) {
-    this.loadUserFromLocalStorage(); // Załaduj stan przy starcie serwisu
+    this.loadUserFromLocalStorage(); // Load state on service startup
   }
 
-  // Metoda do obsługi logowania
+  // Method for handling login
   login(credentials: LoginRequestDto): Observable<LoginResponseDto | null> {
-    // Dla JSON Servera, prosty mock logowania: znajdź użytkownika po emailu i haśle
-    // WAŻNE: Pamiętaj, że w prawdziwej aplikacji nie wysyłałbyś hasła w URL-u
-    // i używałbyś endpointu POST do uwierzytelniania.
+    // For JSON Server, a simple mock login: find user by email and password
+    // IMPORTANT: In a real app, you would not send the password in the URL
+    // and would use a POST endpoint for authentication.
     return this.apiService
       .get<any[]>(
-        // *** NAPRAWIONA LINIA ***
-        // Użycie prawidłowego literału szablonowego (backticks `) do budowy URL-a
+        // *** FIXED LINE ***
+        // Use correct template literal (backticks `) to build the URL
         `users?email=${credentials.email}&password=${credentials.password}`
       )
       .pipe(
         map((users) => {
           if (users && users.length > 0) {
             const userDto = users[0];
-            const token = 'mock-jwt-token-' + userDto.id; // Generowanie mockowego tokena JWT
+            const token = 'mock-jwt-token-' + userDto.id; // Generate mock JWT token
             const userId = userDto.id;
 
-            // Zapisz dane użytkownika w Local Storage
+            // Save user data in Local Storage
             localStorage.setItem('jwt_token', token);
             localStorage.setItem('current_user_id', userId);
-            localStorage.setItem('current_user_data', JSON.stringify(userDto)); // Zapisz dane DTO
+            localStorage.setItem('current_user_data', JSON.stringify(userDto)); // Save DTO data
 
-            // Zaktualizuj sygnały
+            // Update signals
             this.isAuthenticated.set(true);
             this.currentUser.set(UserMapper.fromDto(userDto));
 
@@ -59,12 +59,12 @@ export class AuthService {
           console.error('Login error (AuthService):', error);
           this.isAuthenticated.set(false);
           this.currentUser.set(null);
-          return of(null); // Zwróć Observable z nullem w przypadku błędu
+          return of(null); // Return Observable with null in case of error
         })
       );
   }
 
-  // Metoda do obsługi wylogowania
+  // Method for handling logout
   logout(): void {
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('current_user_id');
@@ -74,17 +74,17 @@ export class AuthService {
     console.log('User logged out.');
   }
 
-  // Metoda do sprawdzania, czy użytkownik jest zalogowany
+  // Method to check if user is logged in
   checkAuth(): boolean {
     const token = localStorage.getItem('jwt_token');
-    this.isAuthenticated.set(!!token); // Ustaw isAuthenticated na true, jeśli token istnieje
+    this.isAuthenticated.set(!!token); // Set isAuthenticated to true if token exists
     if (token && !this.currentUser()) {
-      this.loadUserFromLocalStorage(); // Załaduj dane użytkownika, jeśli token jest, ale currentUser nie jest ustawiony
+      this.loadUserFromLocalStorage(); // Load user data if token exists but currentUser is not set
     }
     return this.isAuthenticated();
   }
 
-  // Prywatna metoda do ładowania danych użytkownika z Local Storage
+  // Private method to load user data from Local Storage
   private loadUserFromLocalStorage(): void {
     const token = localStorage.getItem('jwt_token');
     const userData = localStorage.getItem('current_user_data');
@@ -96,7 +96,7 @@ export class AuthService {
         this.isAuthenticated.set(true);
       } catch (e) {
         console.error('Error parsing user data from local storage:', e);
-        this.logout(); // Wyloguj, jeśli dane są uszkodzone
+        this.logout(); // Log out if data is corrupted
       }
     } else {
       this.isAuthenticated.set(false);
@@ -104,9 +104,9 @@ export class AuthService {
     }
   }
 
-  // Metoda do rejestracji (dla JSON Servera - dodanie nowego użytkownika)
+  // Method for registration (for JSON Server - adding a new user)
   register(userData: any): Observable<User | null> {
-    // W JSON Serverze, po prostu dodajemy nowego użytkownika do zasobu 'users'
+    // In JSON Server, simply add a new user to the 'users' resource
     return this.apiService.post<any>('users', userData).pipe(
       map((userDto) => {
         if (userDto) {

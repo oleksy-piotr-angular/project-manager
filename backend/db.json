@@ -13,14 +13,6 @@
       "email": "admin@example.com"
     }
   ],
-  "projects": [
-    {
-      "id": "748b",
-      "name": "sadasd",
-      "description": "asdasd",
-      "status": "active",
-      "userId": "1"
-    }
-  ],
+  "projects": [],
   "tasks": []
 }

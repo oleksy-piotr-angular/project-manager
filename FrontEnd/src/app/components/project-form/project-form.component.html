@@ -1,11 +1,11 @@
 <div class="project-form-container">
-  <h3>{{ isEditing() ? "Edytuj Projekt" : "Dodaj Nowy Projekt" }}</h3>
+  <h3>{{ isEditing() ? "Edit Project" : "Add New Project" }}</h3>
   <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
     <app-input-field
-      label="Nazwa Projektu"
+      label="Project Name"
       type="text"
       id="projectName"
-      placeholder="Wprowadź nazwę projektu"
+      placeholder="Enter project name"
       formControlName="name"
     >
       <app-error-message
@@ -14,7 +14,7 @@
     </app-input-field>
 
     <div class="form-group">
-      <label for="description">Opis Projektu</label>
+      <label for="description">Project Description</label>
       <textarea
         id="description"
         rows="4"
@@ -33,9 +33,9 @@
     <div class="form-group" *ngIf="isEditing()">
       <label for="status">Status</label>
       <select id="status" formControlName="status">
-        <option value="active">Aktywny</option>
-        <option value="completed">Ukończony</option>
-        <option value="on_hold">Wstrzymany</option>
+        <option value="active">Active</option>
+        <option value="completed">Completed</option>
+        <option value="on_hold">On Hold</option>
       </select>
       <app-error-message
         [control]="projectForm.get('status')"
@@ -49,15 +49,11 @@
         [disabled]="projectForm.invalid || isLoading"
       >
         {{
-          isLoading
-            ? "Zapisywanie..."
-            : isEditing()
-            ? "Zapisz Zmiany"
-            : "Dodaj Projekt"
+          isLoading ? "Saving..." : isEditing() ? "Save Changes" : "Add Project"
         }}
       </button>
       <button type="button" class="btn-secondary" (click)="cancel.emit()">
-        Anuluj
+        Cancel
       </button>
     </div>
     <div *ngIf="formError" class="form-error">{{ formError }}</div>

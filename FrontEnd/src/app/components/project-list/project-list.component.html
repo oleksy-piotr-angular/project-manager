@@ -3,17 +3,17 @@
     <input
       type="text"
       [formControl]="filterControl"
-      placeholder="Filtruj projekty..."
+      placeholder="Filter projects..."
       class="filter-input"
     />
     <select [formControl]="statusFilterControl" class="filter-select">
-      <option value="all">Wszystkie statusy</option>
-      <option value="active">Aktywne</option>
-      <option value="completed">Ukończone</option>
-      <option value="on_hold">Wstrzymane</option>
+      <option value="all">All statuses</option>
+      <option value="active">Active</option>
+      <option value="completed">Completed</option>
+      <option value="on_hold">On Hold</option>
     </select>
     <button class="btn-primary" (click)="openCreateProjectForm()">
-      Dodaj Projekt
+      Add Project
     </button>
   </div>
 
@@ -22,7 +22,7 @@
       *ngIf="projectService.filteredProjects().length === 0"
       class="no-projects"
     >
-      Brak projektów. Dodaj swój pierwszy projekt!
+      No projects. Add your first project!
     </div>
     <div
       *ngFor="let project of projectService.filteredProjects()"
@@ -35,10 +35,10 @@
       </div>
       <div class="card-actions">
         <button class="btn-secondary" (click)="editProject(project.id)">
-          Edytuj
+          Edit
         </button>
         <button class="btn-error" (click)="deleteProject(project.id)">
-          Usuń
+          Delete
         </button>
       </div>
     </div>

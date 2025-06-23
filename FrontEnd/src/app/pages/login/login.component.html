@@ -1,12 +1,12 @@
 <div class="login-page">
   <div class="login-container">
-    <h2>Logowanie</h2>
+    <h2>Login</h2>
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <app-input-field
-        label="Adres E-mail"
+        label="Email Address"
         type="email"
         id="email"
-        placeholder="Podaj swój adres e-mail"
+        placeholder="Enter your email address"
         formControlName="email"
       >
         <app-error-message
@@ -15,10 +15,10 @@
       </app-input-field>
 
       <app-input-field
-        label="Hasło"
+        label="Password"
         type="password"
         id="password"
-        placeholder="Podaj swoje hasło"
+        placeholder="Enter your password"
         formControlName="password"
       >
         <app-error-message
@@ -31,7 +31,7 @@
         class="btn-primary"
         [disabled]="loginForm.invalid || isLoading"
       >
-        {{ isLoading ? "Logowanie..." : "Zaloguj się" }}
+        {{ isLoading ? "Logging in..." : "Log in" }}
       </button>
 
       <div *ngIf="loginError" class="login-error">{{ loginError }}</div>

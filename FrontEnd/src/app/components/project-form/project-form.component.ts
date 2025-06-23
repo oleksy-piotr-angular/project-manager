@@ -73,8 +73,7 @@ export class ProjectFormComponent implements OnInit {
       const currentUserId = this.authService.currentUser()?.id;
 
       if (!currentUserId) {
-        this.formError =
-          'Brak identyfikatora użytkownika. Proszę zalogować się ponownie.';
+        this.formError = 'No user identifier. Please log in again.';
         this.isLoading = false;
         return;
       }
@@ -86,13 +85,11 @@ export class ProjectFormComponent implements OnInit {
           next: () => {
             this.isLoading = false;
             this.save.emit();
-            alert('Projekt zaktualizowany pomyślnie!');
+            alert('Project updated successfully!');
           },
           error: (err) => {
             this.isLoading = false;
-            this.formError = `Błąd aktualizacji: ${
-              err.message || 'Nieznany błąd'
-            }`;
+            this.formError = `Update error: ${err.message || 'Unknown error'}`;
           },
         });
       } else {
@@ -105,13 +102,11 @@ export class ProjectFormComponent implements OnInit {
             this.isLoading = false;
             this.projectForm.reset();
             this.save.emit();
-            alert('Projekt dodany pomyślnie!');
+            alert('Project added successfully!');
           },
           error: (err) => {
             this.isLoading = false;
-            this.formError = `Błąd dodawania: ${
-              err.message || 'Nieznany błąd'
-            }`;
+            this.formError = `Add error: ${err.message || 'Unknown error'}`;
           },
         });
       }

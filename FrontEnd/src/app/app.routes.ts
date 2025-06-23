@@ -26,5 +26,5 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-  { path: '**', redirectTo: 'dashboard' }, // lub strona 404
+  { path: '**', redirectTo: 'dashboard' }, // or a 404 page
 ];

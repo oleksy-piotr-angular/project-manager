@@ -56,14 +56,14 @@ export class LoginComponent {
             if (response) {
               this.router.navigate(['/dashboard']);
             } else {
-              this.loginError = 'Błędny e-mail lub hasło.';
+              this.loginError = 'Invalid email or password.';
             }
           })
         )
         .subscribe({
           error: (err) => {
             this.isLoading = false;
-            this.loginError = err.message || 'Wystąpił nieoczekiwany błąd.';
+            this.loginError = err.message || 'An unexpected error occurred.';
           },
         });
     }

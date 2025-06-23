@@ -1,19 +1,19 @@
 <div class="dashboard-page">
   <header class="navbar">
-    <h1>Platforma Projektów</h1>
+    <h1>Project Platform</h1>
     <nav>
-      <button class="btn-secondary" (click)="logout()">Wyloguj</button>
+      <button class="btn-secondary" (click)="logout()">Log out</button>
     </nav>
   </header>
   <div class="container">
     <h2 *ngIf="authService.currentUser()">
-      Witaj, {{ authService.currentUser()?.name }}!
+      Welcome, {{ authService.currentUser()?.name }}!
     </h2>
     <p *ngIf="authService.currentUser()">
-      Twój e-mail: {{ authService.currentUser()?.email }}
+      Your email: {{ authService.currentUser()?.email }}
     </p>
 
-    <p *ngIf="!authService.currentUser()">Ładowanie danych użytkownika...</p>
+    <p *ngIf="!authService.currentUser()">Loading user data...</p>
 
     <div *ngIf="showProjectForm()">
       <app-project-form
@@ -23,7 +23,7 @@
       ></app-project-form>
     </div>
     <div *ngIf="!showProjectForm()">
-      <h3>Twoje Projekty</h3>
+      <h3>Your Projects</h3>
       <app-project-list></app-project-list>
     </div>
   </div>

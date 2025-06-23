@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, effect } from '@angular/core';
 import { ProjectService } from '../../services/project.service';
 import { AuthService } from '../../services/auth.service';
-import { NgFor, NgIf } from '@angular/common'; // AsyncPipe nie jest już potrzebny, jeśli używasz toSignal
+import { NgFor, NgIf } from '@angular/common'; // AsyncPipe is no longer needed if you use toSignal
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -65,9 +65,9 @@ export class ProjectListComponent implements OnInit {
           console.log(
             'No user ID found or user logged out. Clearing projects.'
           );
-          // *** KLUCZOWA ZMIANA: WYWOŁANIE METODY CLEARPROJECTS Z SERWISU ***
+          // *** KEY CHANGE: CALLING CLEARPROJECTS METHOD FROM SERVICE ***
           this.projectService.clearProjects();
-          // *** KONIEC ZMIANY ***
+          // *** END OF CHANGE ***
         }
       },
       { allowSignalWrites: true }
@@ -83,11 +83,11 @@ export class ProjectListComponent implements OnInit {
   getStatusDisplayName(status: 'active' | 'completed' | 'on_hold'): string {
     switch (status) {
       case 'active':
-        return 'Aktywny';
+        return 'Active';
       case 'completed':
-        return 'Ukończony';
+        return 'Completed';
       case 'on_hold':
-        return 'Wstrzymany';
+        return 'On Hold';
       default:
         return status;
     }
@@ -102,10 +102,10 @@ export class ProjectListComponent implements OnInit {
   }
 
   deleteProject(projectId: string): void {
-    if (confirm('Czy na pewno chcesz usunąć ten projekt?')) {
+    if (confirm('Are you sure you want to delete this project?')) {
       this.projectService.deleteProject(projectId).subscribe({
-        next: () => alert('Projekt usunięty pomyślnie!'),
-        error: (err) => alert(`Błąd podczas usuwania projektu: ${err.message}`),
+        next: () => alert('Project deleted successfully!'),
+        error: (err) => alert(`Error deleting project: ${err.message}`),
       });
     }
   }

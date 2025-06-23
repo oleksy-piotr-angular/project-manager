@@ -41,11 +41,11 @@ export class TaskListComponent implements OnInit {
   getStatusDisplayName(status: 'todo' | 'in_progress' | 'done'): string {
     switch (status) {
       case 'todo':
-        return 'Do zrobienia';
+        return 'To do';
       case 'in_progress':
-        return 'W toku';
+        return 'In progress';
       case 'done':
-        return 'Ukończone';
+        return 'Completed';
       default:
         return status;
     }
@@ -54,25 +54,23 @@ export class TaskListComponent implements OnInit {
   toggleTaskStatus(task: Task): void {
     const newStatus = task.status === 'done' ? 'todo' : 'done';
     this.taskService.updateTask(task.id, { status: newStatus }).subscribe({
-      error: (err) => alert(`Błąd zmiany statusu zadania: ${err.message}`),
+      error: (err) => alert(`Error changing task status: ${err.message}`),
     });
   }
 
   openCreateTaskForm(): void {
-    alert(
-      `Otworzy się modal do tworzenia zadania dla projektu ${this.projectId()}`
-    );
+    alert(`A modal to create a task for project ${this.projectId()} will open`);
   }
 
   editTask(taskId: string): void {
-    alert(`Edytuj zadanie: ${taskId}`);
+    alert(`Edit task: ${taskId}`);
   }
 
   deleteTask(taskId: string): void {
-    if (confirm('Czy na pewno chcesz usunąć to zadanie?')) {
+    if (confirm('Are you sure you want to delete this task?')) {
       this.taskService.deleteTask(taskId).subscribe({
-        next: () => alert('Zadanie usunięte pomyślnie!'),
-        error: (err) => alert(`Błąd podczas usuwania zadania: ${err.message}`),
+        next: () => alert('Task deleted successfully!'),
+        error: (err) => alert(`Error deleting task: ${err.message}`),
       });
     }
   }
