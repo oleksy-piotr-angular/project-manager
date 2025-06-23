@@ -1,11 +1,13 @@
+// src/app/components/project-list/project-list.component.ts
+
 import { Component, OnInit, inject, effect } from '@angular/core';
 import { ProjectService } from '../../services/project.service';
 import { AuthService } from '../../services/auth.service';
-import { NgFor, NgIf } from '@angular/common'; // AsyncPipe is no longer needed if you use toSignal
+import { NgFor, NgIf } from '@angular/common'; // AsyncPipe is not needed when using toSignal
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { DashboardComponent } from '../../pages/dashboard/dashboard.component';
+import { DashboardComponent } from '../../pages/dashboard/dashboard.component'; // Ensure this path is correct
 
 @Component({
   selector: 'app-project-list',
@@ -18,13 +20,14 @@ export class ProjectListComponent implements OnInit {
   projectService = inject(ProjectService);
   authService = inject(AuthService);
   private router = inject(Router);
-  private dashboardComponent = inject(DashboardComponent);
+  private dashboardComponent = inject(DashboardComponent); // To handle form modal
 
   filterControl = new FormControl('');
   statusFilterControl = new FormControl<
     'all' | 'active' | 'completed' | 'on_hold'
   >('all');
 
+  // Convert FormControl valueChanges Observables to Signals
   filterTextSignal = toSignal(this.filterControl.valueChanges, {
     initialValue: '',
   });
@@ -33,18 +36,29 @@ export class ProjectListComponent implements OnInit {
   });
 
   constructor() {
-    // Effects that react to changes in filter signals and update ProjectService's internal signals
-    effect(() => {
-      this.projectService.filterText.set(this.filterTextSignal() || '');
-    });
+    // Effect to update ProjectService's filterText signal.
+    // `allowSignalWrites: true` is necessary because this effect writes to another service's signal.
+    effect(
+      () => {
+        this.projectService.filterText.set(this.filterTextSignal() || '');
+      },
+      { allowSignalWrites: true }
+    );
 
-    effect(() => {
-      this.projectService.statusFilter.set(this.statusFilterSignal() || 'all');
-    });
+    // Effect to update ProjectService's statusFilter signal.
+    // `allowSignalWrites: true` is necessary because this effect writes to another service's signal.
+    effect(
+      () => {
+        this.projectService.statusFilter.set(
+          this.statusFilterSignal() || 'all'
+        );
+      },
+      { allowSignalWrites: true }
+    );
 
-    // Effect to load projects based on user authentication status
-    // This effect ensures projects are loaded when a user logs in (userId becomes available)
-    // and cleared when a user logs out (userId becomes null).
+    // Effect to load or clear projects based on user authentication status.
+    // This effect calls methods in ProjectService that modify its internal signals,
+    // hence `allowSignalWrites: true` is required here as well.
     effect(
       () => {
         const currentUserId = this.authService.currentUser()?.id;
@@ -65,9 +79,7 @@ export class ProjectListComponent implements OnInit {
           console.log(
             'No user ID found or user logged out. Clearing projects.'
           );
-          // *** KEY CHANGE: CALLING CLEARPROJECTS METHOD FROM SERVICE ***
           this.projectService.clearProjects();
-          // *** END OF CHANGE ***
         }
       },
       { allowSignalWrites: true }
@@ -75,11 +87,15 @@ export class ProjectListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // This method can now be empty or contain other initialization logic
-    // that does not involve Angular's `effect()` function.
-    // Project loading is handled reactively by the effect in the constructor.
+    // ngOnInit remains empty as all primary reactive logic is handled in the constructor effects.
+    // This method can be used for other initialization logic that does not involve `effect()` calls.
   }
 
+  /**
+   * Returns the display name for a project status.
+   * @param status The project status ('active', 'completed', 'on_hold').
+   * @returns A human-readable string for the status.
+   */
   getStatusDisplayName(status: 'active' | 'completed' | 'on_hold'): string {
     switch (status) {
       case 'active':
@@ -93,14 +109,25 @@ export class ProjectListComponent implements OnInit {
     }
   }
 
+  /**
+   * Opens the project creation/editing modal in the DashboardComponent.
+   */
   openCreateProjectForm(): void {
     this.dashboardComponent.openCreateProjectModal();
   }
 
+  /**
+   * Navigates to the project details page for the given project ID.
+   * @param projectId The ID of the project to edit.
+   */
   editProject(projectId: string): void {
     this.router.navigate(['/projects', projectId]);
   }
 
+  /**
+   * Deletes a project after user confirmation.
+   * @param projectId The ID of the project to delete.
+   */
   deleteProject(projectId: string): void {
     if (confirm('Are you sure you want to delete this project?')) {
       this.projectService.deleteProject(projectId).subscribe({
