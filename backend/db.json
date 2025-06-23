@@ -5,22 +5,48 @@
       "username": "user1",
       "password": "password123",
       "email": "user1@example.com"
-    },
-    {
-      "id": "2",
-      "username": "admin",
-      "password": "adminpassword",
-      "email": "admin@example.com"
     }
   ],
   "projects": [
     {
-      "id": "677d",
-      "name": "New Project1",
-      "description": "New Project Description",
-      "status": "active",
-      "userId": "1"
+      "id": "project1",
+      "userId": "1",
+      "name": "Frontend Refactor",
+      "description": "Refactor the Angular frontend for better performance and maintainability.",
+      "status": "active"
+    },
+    {
+      "id": "project2",
+      "userId": "1",
+      "name": "Backend API Development",
+      "description": "Develop new RESTful APIs for data management.",
+      "status": "on_hold"
     }
   ],
-  "tasks": []
+  "tasks": [
+    {
+      "id": "task1",
+      "projectId": "project1",
+      "title": "Implement signal-based state management",
+      "description": "Convert existing RxJS services to use Angular signals.",
+      "status": "todo",
+      "dueDate": "2025-07-15"
+    },
+    {
+      "id": "task2",
+      "projectId": "project1",
+      "title": "Optimize build process",
+      "description": "Reduce build times using Webpack optimizations.",
+      "status": "in_progress",
+      "dueDate": "2025-06-30"
+    },
+    {
+      "id": "task3",
+      "projectId": "project2",
+      "title": "Design User Authentication API",
+      "description": "Define endpoints and data models for user authentication.",
+      "status": "done",
+      "dueDate": "2025-07-20"
+    }
+  ]
 }
