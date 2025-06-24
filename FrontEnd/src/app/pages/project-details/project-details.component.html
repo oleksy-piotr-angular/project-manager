@@ -1,26 +1,71 @@
-<div class="project-details-page container">
-  <button class="btn-back" (click)="router.navigate(['/dashboard'])">
-    ← Back to Projects
+<div class="project-details-container">
+  <button class="back-button" (click)="goBackToDashboard()">
+    &larr; Back to Dashboard
   </button>
 
-  <ng-container *ngIf="currentProject(); let project">
-    <h2>{{ project.name }}</h2>
-    <p class="project-description">{{ project.description }}</p>
-    <div class="project-status status-{{ project.status }}">
-      Status: {{ getStatusDisplayName(project.status) }}
+  <ng-container *ngIf="project(); else loadingOrNotFound">
+    <div class="project-info-card">
+      <h2>{{ project()!.name }}</h2>
+      <p>{{ project()!.description }}</p>
+      <p><strong>Status:</strong> {{ project()!.status | titlecase }}</p>
     </div>
 
-    <div class="project-stats">
-      <p>Total Tasks: {{ totalTasks() }}</p>
-      <p>
-        Completed Tasks: {{ completedTasks() }} ({{ completionPercentage() }}%)
-      </p>
-    </div>
+    <div class="task-management-section">
+      <h3>Tasks for this Project</h3>
 
-    <app-task-list [projectId]="project.id"></app-task-list>
+      <button class="add-task-button" (click)="openAddTaskForm()">
+        Add New Task
+      </button>
+
+      <div class="task-list-wrapper">
+        <ng-container *ngIf="tasks().length > 0; else noTasks">
+          <ul class="task-list">
+            <li *ngFor="let task of tasks()" class="task-item">
+              <div class="task-details">
+                <h4>{{ task.title }}</h4>
+                <p>{{ task.description }}</p>
+                <div class="task-meta">
+                  <span
+                    >Status: {{ getTaskStatusDisplayName(task.status) }}</span
+                  >
+                  <span *ngIf="task.dueDate">Due: {{ task.dueDate }}</span>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button class="edit-button" (click)="editTask(task)">
+                  Edit
+                </button>
+                <button class="delete-button" (click)="deleteTask(task.id)">
+                  Delete
+                </button>
+              </div>
+            </li>
+          </ul>
+        </ng-container>
+        <ng-template #noTasks>
+          <p class="no-tasks-message">
+            No tasks found for this project. Add one!
+          </p>
+        </ng-template>
+      </div>
+    </div>
   </ng-container>
 
-  <div *ngIf="!currentProject()" class="loading-message">
-    Loading project details...
+  <ng-template #loadingOrNotFound>
+    <div class="loading-message" *ngIf="!project() && projectId">
+      Loading project details...
+    </div>
+    <div class="error-message" *ngIf="!project() && !projectId">
+      Project not found or invalid ID.
+    </div>
+  </ng-template>
+
+  <div class="task-form-overlay" *ngIf="showTaskForm()">
+    <app-task-form
+      [projectId]="projectId!"
+      [editingTask]="editingTask()"
+      (taskSaved)="onTaskFormSave($event)"
+      (cancel)="onTaskFormCancel()"
+    ></app-task-form>
   </div>
 </div>

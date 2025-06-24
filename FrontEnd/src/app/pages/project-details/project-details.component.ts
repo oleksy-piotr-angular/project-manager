@@ -1,58 +1,75 @@
-import { Component, OnInit, inject, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
 import { TaskService } from '../../services/task.service';
-import { NgIf /*ToDo NgFor, DatePipe  */ } from '@angular/common';
-import { TaskListComponent } from '../../components/task-list/task-list.component';
-import { Project } from '../../models/project.model'; // NEW: Import Project model
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { AuthService } from '../../services/auth.service';
+import { Project } from '../../models/project.model';
+import { Task } from '../../models/task.model';
+import { CreateTaskDto, UpdateTaskDto } from '../../dtos/task.dto'; // Imported for type safety and better developer experience (IntelliSense, static analysis) when using TaskMapper.
+import { TaskMapper } from '../../mappers/task.mapper';
+import { CommonModule, NgIf, NgFor, TitleCasePipe } from '@angular/common';
+import { TaskFormComponent } from '../../components/task-form/task-form.component';
 
 @Component({
   selector: 'app-project-details',
   standalone: true,
-  imports: [NgIf, TaskListComponent /*ToDo NgFor, DatePipe */],
+  imports: [NgIf, NgFor, TaskFormComponent, CommonModule, TitleCasePipe],
   templateUrl: './project-details.component.html',
   styleUrls: ['./project-details.component.scss'],
 })
 export class ProjectDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private projectService = inject(ProjectService);
-  taskService = inject(TaskService); // Public to use in template
-  router = inject(Router);
+  private taskService = inject(TaskService);
+  private authService = inject(AuthService);
 
-  // Fix: Ensure the projectId signal is typed correctly
-  projectId = toSignal(
-    this.route.paramMap.pipe(map((params) => params.get('id')!))
-  );
+  projectId: string | null = null;
+  project = signal<Project | undefined>(undefined);
+  tasks = this.taskService.tasks; // Use the read-only signal from TaskService
 
-  // Fix: Ensure currentProject computed signal returns Project | undefined
-  currentProject = computed<Project | undefined>(() => {
-    const projectId = this.projectId();
-    if (!projectId) return undefined;
-    return this.projectService
-      .projects()
-      .find((p: Project) => p.id === projectId); // Fix: Type 'p' as Project
-  });
-
-  totalTasks = computed(() => this.taskService.tasks().length);
-  completedTasks = computed(
-    () =>
-      this.taskService.tasks().filter((task) => task.status === 'done').length
-  );
-  completionPercentage = computed(() => {
-    const total = this.totalTasks();
-    const completed = this.completedTasks();
-    return total > 0 ? Math.round((completed / total) * 100) : 0;
-  });
+  showTaskForm = signal(false);
+  editingTask = signal<Task | undefined>(undefined);
 
   constructor() {
+    // Effect to load project details and associated tasks when projectId changes
+    // or when the user logs in/out.
     effect(
       () => {
-        const projectId = this.projectId();
-        if (projectId) {
-          // Load tasks when projectId changes
-          this.taskService.loadTasksForProject(projectId).subscribe();
+        this.projectId = this.route.snapshot.paramMap.get('id');
+        const currentUserId = this.authService.currentUser()?.id;
+
+        if (this.projectId && currentUserId) {
+          // Load project details
+          this.projectService.getProjectById(this.projectId).subscribe({
+            next: (proj) => {
+              if (proj && proj.userId === currentUserId) {
+                this.project.set(proj);
+                // Load tasks for this project
+                this.taskService.loadTasks(this.projectId!).subscribe({
+                  next: () =>
+                    console.log('Tasks loaded for project:', this.projectId),
+                  error: (err) =>
+                    console.error('Failed to load tasks for project:', err),
+                });
+              } else {
+                console.warn(
+                  'Project not found or does not belong to the current user.'
+                );
+                this.router.navigate(['/dashboard']); // Redirect if project not found or unauthorized
+              }
+            },
+            error: (err) => {
+              console.error('Failed to load project details:', err);
+              this.router.navigate(['/dashboard']); // Redirect on error
+            },
+          });
+        } else if (!this.projectId) {
+          console.warn('No Project ID provided in URL.');
+          this.router.navigate(['/dashboard']);
+        } else if (!currentUserId) {
+          console.warn('User not authenticated, cannot load project details.');
+          this.router.navigate(['/login']); // Or simply clear state
         }
       },
       { allowSignalWrites: true }
@@ -60,25 +77,99 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // If projects are not yet loaded (e.g., after direct URL access), load them.
-    if (this.projectService.projects().length === 0) {
-      const currentUserId = localStorage.getItem('current_user_id');
-      if (currentUserId) {
-        this.projectService.loadProjects(currentUserId).subscribe();
-      }
+    // Initial loading is handled by the effect in the constructor.
+  }
+
+  /**
+   * Opens the task form for adding a new task.
+   */
+  openAddTaskForm(): void {
+    if (!this.projectId) {
+      console.error('Cannot add task: Project ID is missing.');
+      alert('Error: Project ID is missing. Cannot add task.');
+      return;
+    }
+    this.editingTask.set(undefined); // Clear any previous editing state
+    this.showTaskForm.set(true);
+  }
+
+  /**
+   * Handles saving a task (either new or updated).
+   * @param taskData The partial Task object from the form.
+   */
+  onTaskFormSave(taskData: Partial<Task>): void {
+    if (this.editingTask()) {
+      // Update existing task
+      const updateDto = TaskMapper.toUpdateDto(taskData);
+      this.taskService.updateTask(this.editingTask()!.id, updateDto).subscribe({
+        next: () => {
+          alert('Task updated successfully!');
+          this.showTaskForm.set(false);
+          this.editingTask.set(undefined);
+        },
+        error: (err) => console.error('Error updating task:', err),
+      });
+    } else if (this.projectId) {
+      // Create new task
+      const createDto = TaskMapper.toCreateDto({
+        ...taskData,
+        projectId: this.projectId,
+      });
+      this.taskService.createTask(createDto).subscribe({
+        next: () => {
+          alert('Task added successfully!');
+          this.showTaskForm.set(false);
+        },
+        error: (err) => console.error('Error adding task:', err),
+      });
     }
   }
 
-  getStatusDisplayName(status: 'active' | 'completed' | 'on_hold'): string {
-    switch (status) {
-      case 'active':
-        return 'Active';
-      case 'completed':
-        return 'Completed';
-      case 'on_hold':
-        return 'On Hold';
-      default:
-        return status;
+  /**
+   * Closes the task form.
+   */
+  onTaskFormCancel(): void {
+    this.showTaskForm.set(false);
+    this.editingTask.set(undefined);
+  }
+
+  /**
+   * Opens the task form for editing an existing task.
+   * @param task The task to be edited.
+   */
+  editTask(task: Task): void {
+    this.editingTask.set(task);
+    this.showTaskForm.set(true);
+  }
+
+  /**
+   * Deletes a task after user confirmation.
+   * @param taskId The ID of the task to delete.
+   */
+  deleteTask(taskId: string): void {
+    if (confirm('Are you sure you want to delete this task?')) {
+      this.taskService.deleteTask(taskId).subscribe({
+        next: () => {
+          alert('Task deleted successfully!');
+        },
+        error: (err) => console.error('Error deleting task:', err),
+      });
     }
+  }
+
+  /**
+   * Returns a display name for task status.
+   * @param status The status of the task.
+   * @returns A capitalized string for display.
+   */
+  getTaskStatusDisplayName(status: 'todo' | 'in_progress' | 'done'): string {
+    return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+  }
+
+  /**
+   * Navigates back to the dashboard.
+   */
+  goBackToDashboard(): void {
+    this.router.navigate(['/dashboard']);
   }
 }
