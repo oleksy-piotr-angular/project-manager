@@ -1,4 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
 import { ApiService } from './api.service';
 import { LoginRequestDto } from '../dtos/auth.dto';
@@ -9,6 +14,7 @@ import { UserMapper } from '../mappers/user.mapper';
 describe('AuthService', () => {
   let service: AuthService;
   let apiServiceSpy: jasmine.SpyObj<ApiService>;
+  let httpTestingController: HttpTestingController;
 
   const mockUserDto = {
     id: 'user1_id',
@@ -19,28 +25,40 @@ describe('AuthService', () => {
   const mockUser: User = UserMapper.fromDto(mockUserDto);
 
   beforeEach(() => {
-    // Create a spy object for ApiService
     apiServiceSpy = jasmine.createSpyObj('ApiService', ['get', 'post']);
 
     TestBed.configureTestingModule({
       providers: [
         AuthService,
-        { provide: ApiService, useValue: apiServiceSpy }, // Provide the spy
+        { provide: ApiService, useValue: apiServiceSpy },
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     });
     service = TestBed.inject(AuthService);
+    httpTestingController = TestBed.inject(HttpTestingController);
 
-    // Clear localStorage before each test
     localStorage.clear();
-    // Re-initialize service to ensure signals are clean
+
     TestBed.resetTestingModule(); // Resets the module to ensure fresh service instance
     TestBed.configureTestingModule({
       providers: [
         AuthService,
         { provide: ApiService, useValue: apiServiceSpy },
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     });
     service = TestBed.inject(AuthService);
+    httpTestingController = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    try {
+      httpTestingController.verify();
+    } catch (error) {
+      // Ignore if no requests were made or expected.
+    }
   });
 
   it('should be created', () => {
@@ -49,9 +67,7 @@ describe('AuthService', () => {
     expect(service.currentUser()).toBeNull();
   });
 
-  // Test successful login
   it('should set isAuthenticated to true and currentUser on successful login', (done) => {
-    // Mock the API response for get method (used for login in JSON Server mock)
     apiServiceSpy.get.and.returnValue(of([mockUserDto]));
 
     const loginRequest: LoginRequestDto = {
@@ -79,9 +95,8 @@ describe('AuthService', () => {
     );
   });
 
-  // Test failed login (no user found)
   it('should not authenticate on failed login (no user)', (done) => {
-    apiServiceSpy.get.and.returnValue(of([])); // No user found
+    apiServiceSpy.get.and.returnValue(of([]));
 
     const loginRequest: LoginRequestDto = {
       email: 'wrong@example.com',
@@ -97,36 +112,33 @@ describe('AuthService', () => {
     });
   });
 
-  // Test login error (API error)
   it('should not authenticate on API error during login', (done) => {
-    apiServiceSpy.get.and.returnValue(throwError(() => new Error('API down'))); // Simulate API error
+    apiServiceSpy.get.and.returnValue(throwError(() => new Error('API down')));
 
     const loginRequest: LoginRequestDto = {
       email: 'test@example.com',
       password: 'password',
     };
 
-    spyOn(console, 'error'); // Spy on console.error
+    spyOn(console, 'error');
     service.login(loginRequest).subscribe((response) => {
       expect(response).toBeNull();
       expect(service.isAuthenticated()).toBeFalse();
       expect(service.currentUser()).toBeNull();
       expect(localStorage.getItem('jwt_token')).toBeNull();
       expect(console.error).toHaveBeenCalledWith(
-        'Login error:',
+        'Login error (AuthService):',
         jasmine.any(Error)
       );
       done();
     });
   });
 
-  // Test logout
   it('should clear authentication state on logout', () => {
-    // First, simulate a logged-in state
     localStorage.setItem('jwt_token', 'some_token');
     localStorage.setItem('current_user_id', 'user1_id');
     localStorage.setItem('current_user_data', JSON.stringify(mockUserDto));
-    service.checkAuth(); // Call checkAuth to update signals from local storage
+    service.checkAuth();
 
     expect(service.isAuthenticated()).toBeTrue();
     expect(service.currentUser()).toEqual(mockUser);
@@ -139,7 +151,6 @@ describe('AuthService', () => {
     expect(localStorage.getItem('current_user_data')).toBeNull();
   });
 
-  // Test checkAuth (logged in)
   it('should correctly set authentication state from local storage on checkAuth', () => {
     localStorage.setItem('jwt_token', 'some_token');
     localStorage.setItem('current_user_id', 'user1_id');
@@ -151,7 +162,6 @@ describe('AuthService', () => {
     expect(service.currentUser()).toEqual(mockUser);
   });
 
-  // Test checkAuth (not logged in)
   it('should correctly set authentication state when no token in local storage', () => {
     const isAuthenticated = service.checkAuth();
     expect(isAuthenticated).toBeFalse();
@@ -159,16 +169,15 @@ describe('AuthService', () => {
     expect(service.currentUser()).toBeNull();
   });
 
-  // Test checkAuth with corrupted local storage data
   it('should log out if current_user_data is corrupted', () => {
     localStorage.setItem('jwt_token', 'some_token');
     localStorage.setItem('current_user_id', 'user1_id');
     localStorage.setItem('current_user_data', 'invalid json');
 
     spyOn(console, 'error');
-    spyOn(service, 'logout'); // Spy on logout to ensure it's called
+    spyOn(service, 'logout');
 
-    service['loadUserFromLocalStorage'](); // Directly call the private method for testing
+    service['loadUserFromLocalStorage']();
 
     expect(console.error).toHaveBeenCalledWith(
       'Error parsing user data from local storage:',
@@ -179,7 +188,6 @@ describe('AuthService', () => {
     expect(service.currentUser()).toBeNull();
   });
 
-  // Test register method
   it('should call apiService.post and map response for registration', (done) => {
     const registerData = {
       username: 'newuser',
