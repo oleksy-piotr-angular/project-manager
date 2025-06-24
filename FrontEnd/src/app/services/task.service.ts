@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { inject, Injectable, signal, computed, effect } from '@angular/core';
 import { ApiService } from './api.service';
 import { Task } from '../models/task.model';
 import { CreateTaskDto, UpdateTaskDto } from '../dtos/task.dto';
@@ -83,7 +83,6 @@ export class TaskService {
       })
     );
   }
-
   /**
    * Updates an existing task in the API.
    * @param taskId The ID of the task to update.
@@ -91,12 +90,26 @@ export class TaskService {
    * @returns An Observable of the updated Task.
    */
   updateTask(taskId: string, dto: UpdateTaskDto): Observable<Task> {
-    return this.apiService.put<Task>(`tasks/${taskId}`, dto).pipe(
+    return this.apiService.patch<Task>(`tasks/${taskId}`, dto).pipe(
+      //  change form PUT to PATCH
       map(TaskMapper.fromDto),
-      tap((updatedTask) => {
+      tap((updatedTaskFromServer) => {
         this._tasks.update((tasks) =>
-          tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t))
-        ); // Update the specific task in the signal
+          tasks.map((t) => {
+            if (t.id === updatedTaskFromServer.id) {
+              const originalTask = tasks.find((task) => task.id === t.id);
+              const projectId: string =
+                updatedTaskFromServer.projectId ??
+                originalTask?.projectId ??
+                '';
+              return {
+                ...updatedTaskFromServer,
+                projectId,
+              };
+            }
+            return t;
+          })
+        );
       }),
       catchError((error) => {
         console.error('Failed to update task:', error);

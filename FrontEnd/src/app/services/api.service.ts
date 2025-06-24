@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http'; // Import HttpErrorResponse
-import { catchError, Observable, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -13,20 +14,16 @@ export class ApiService {
   // Helper method for consistent error handling
   private handleError(error: HttpErrorResponse, path: string) {
     if (error.error instanceof ErrorEvent) {
-      // A client-side or network error occurred. Handle it accordingly.
       console.error(
         `Client-side or network error on ${path}:`,
         error.error.message
       );
     } else {
-      // The backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong.
       console.error(
         `Backend returned code ${error.status}, ` +
           `body was: ${JSON.stringify(error.error)}`
       );
     }
-    // Return an observable with a user-facing error message.
     return throwError(
       () => new Error('Something went wrong; please try again later.')
     );
@@ -52,12 +49,13 @@ export class ApiService {
       );
   }
 
-  put<T>(path: string, body: any): Observable<T> {
+  // FIX: change form PUT to PATCH, because of "json-server" behavior
+  patch<T>(path: string, body: any): Observable<T> {
     return this.http
-      .put<T>(`${this.apiUrl}/${path}`, body)
+      .patch<T>(`${this.apiUrl}/${path}`, body)
       .pipe(
         catchError((error: HttpErrorResponse) =>
-          this.handleError(error, `PUT ${path}`)
+          this.handleError(error, `PATCH ${path}`)
         )
       );
   }
