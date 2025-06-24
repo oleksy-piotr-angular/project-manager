@@ -1,0 +1,50 @@
+<div class="task-form-container">
+  <h3>{{ editingTask ? "Edit Task" : "Add New Task" }}</h3>
+  <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="title">Title</label>
+      <input id="title" type="text" formControlName="title" />
+      <div
+        *ngIf="taskForm.get('title')?.invalid && taskForm.get('title')?.touched"
+        class="error-message"
+      >
+        Title is required.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" formControlName="description"></textarea>
+      <div
+        *ngIf="
+          taskForm.get('description')?.invalid &&
+          taskForm.get('description')?.touched
+        "
+        class="error-message"
+      >
+        Description is required.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="status">Status</label>
+      <select id="status" formControlName="status">
+        <option *ngFor="let status of statusOptions" [value]="status">
+          {{ status | titlecase }}
+        </option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="dueDate">Due Date</label>
+      <input id="dueDate" type="date" formControlName="dueDate" />
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" [disabled]="!taskForm.valid">
+        {{ editingTask ? "Save Changes" : "Add Task" }}
+      </button>
+      <button type="button" (click)="onCancel()">Cancel</button>
+    </div>
+  </form>
+</div>
