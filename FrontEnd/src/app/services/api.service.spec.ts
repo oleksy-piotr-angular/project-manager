@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http'; // Import provideHttpClient
 import {
-  HttpClientTestingModule,
   HttpTestingController,
-} from '@angular/common/http/testing';
+  provideHttpClientTesting,
+} from '@angular/common/http/testing'; // Import provideHttpClientTesting
 import { ApiService } from './api.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -13,8 +14,12 @@ describe('ApiService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule], // Import the testing module
-      providers: [ApiService],
+      // REMOVED: imports: [HttpClientTestingModule],
+      providers: [
+        ApiService,
+        provideHttpClient(), // Provide HttpClient
+        provideHttpClientTesting(), // Provide HttpClient testing utilities
+      ],
     });
     service = TestBed.inject(ApiService);
     httpTestingController = TestBed.inject(HttpTestingController);
@@ -99,7 +104,7 @@ describe('ApiService', () => {
 
     service.get<any>(path).subscribe({
       next: () => fail('should have failed with the 500 error'),
-      error: (error: Error) => {
+      error: (error: HttpErrorResponse) => {
         expect(error.message).toContain('Something went wrong'); // Check the user-facing error message
         expect(console.error).toHaveBeenCalledWith(
           `Backend returned code 500, body was: {}` // Check the logged backend error
@@ -122,7 +127,7 @@ describe('ApiService', () => {
 
     service.post<any>(path, testData).subscribe({
       next: () => fail('should have failed with the 400 error'),
-      error: (error: Error) => {
+      error: (error: HttpErrorResponse) => {
         expect(error.message).toContain('Something went wrong');
         expect(console.error).toHaveBeenCalledWith(
           `Backend returned code 400, body was: {"message":"Bad Request"}`
