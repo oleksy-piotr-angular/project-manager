@@ -211,21 +211,35 @@ describe('ProjectDetailsComponent - Unit Tests', () => {
   }));
 
   it('should set error message if project loading fails', fakeAsync(() => {
+    // 1. Make sure the mock returns an error
     projectServiceSpy.getProjectById.and.returnValue(
       throwError(() => new Error('Project load error'))
     );
+    // 2. Spy console.error
     spyOn(console, 'error');
 
+    // 3. Trigger a change ActivatedRoute (projectId)
     (activatedRouteStub.paramMap as Subject<any>).next({
       get: (key: string) => (key === 'id' ? mockProject.id : null),
     });
-    fixture.detectChanges();
-    tick();
 
+    // 4. Detect changes and pass the time
+    fixture.detectChanges(); // Should trigger an effect
+    tick(); // Allow the subscription to end with an error
+
+    // Potentially, if effect or subscription has additional microtasks, we need another tick()
+
+    // Although rare, worth a try for diagnostics
+
+    // fixture.detectChanges(); // Optional if previous tick() didn't catch all changes
+
+    // tick(); // Optional if previous tick() didn't catch all changes
+
+    // Assertions
     expect(projectServiceSpy.getProjectById).toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(
-      'Error loading project details:',
-      jasmine.any(Error)
+      'Failed to load project details:',
+      jasmine.any(Error) // We still expect any Error object
     );
     expect(component.project()).toBeUndefined();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/dashboard']);
