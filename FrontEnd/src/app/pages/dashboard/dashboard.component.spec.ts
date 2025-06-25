@@ -8,7 +8,7 @@ import { DashboardComponent } from './dashboard.component';
 import { AuthService } from '../../services/auth.service';
 import { ProjectService } from '../../services/project.service';
 import { Router } from '@angular/router';
-import { Project } from '../../models/project.model'; // For type annotation only
+import { Project, ProjectStatus } from '../../models/project.model'; // For type annotation only
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
 import { User } from '../../models/user.model'; // For type annotation only
@@ -34,14 +34,14 @@ describe('DashboardComponent', () => {
       userId: 'u1',
       name: 'Project A',
       description: 'Desc A',
-      status: 'active',
+      status: ProjectStatus.Active,
     },
     {
       id: 'p2',
       userId: 'u1',
       name: 'Project B',
       description: 'Desc B',
-      status: 'on_hold',
+      status: ProjectStatus.OnHold,
     },
   ];
 
