@@ -1,10 +1,11 @@
 import {
   Component,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
+  inject,
   input,
   output,
-  OnInit,
-  inject,
-  computed,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -12,13 +13,13 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { InputFieldComponent } from '../../shared/custom-controls/input-field/input-field.component';
-import { ErrorMessageComponent } from '../../shared/error-message/error-message.component';
-import { NgIf } from '@angular/common';
+import { Project, ProjectStatus } from '../../models/project.model';
+import { CreateProjectDto, UpdateProjectDto } from '../../dtos/project.dto';
 import { ProjectService } from '../../services/project.service';
 import { AuthService } from '../../services/auth.service';
-import { Project } from '../../models/project.model';
-import { CreateProjectDto, UpdateProjectDto } from '../../dtos/project.dto';
+import { NgIf } from '@angular/common';
+import { InputFieldComponent } from '../../shared/custom-controls/input-field/input-field.component';
+import { ErrorMessageComponent } from '../../shared/error-message/error-message.component';
 
 @Component({
   selector: 'app-project-form',
@@ -32,9 +33,9 @@ import { CreateProjectDto, UpdateProjectDto } from '../../dtos/project.dto';
   templateUrl: './project-form.component.html',
   styleUrls: ['./project-form.component.scss'],
 })
-export class ProjectFormComponent implements OnInit {
+export class ProjectFormComponent implements OnInit, OnChanges {
   project = input<Project | undefined>();
-  isEditing = computed(() => !!this.project());
+  isEditing = () => !!this.project();
 
   save = output<void>();
   cancel = output<void>();
@@ -51,12 +52,16 @@ export class ProjectFormComponent implements OnInit {
     this.projectForm = this.fb.group({
       name: ['', Validators.required],
       description: ['', Validators.required],
-      status: ['active', Validators.required],
+      status: [ProjectStatus.Active, Validators.required],
     });
   }
 
   ngOnInit(): void {
-    if (this.isEditing()) {
+    // Do not patch the form here; handled in ngOnChanges
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['project'] && this.project()) {
       const currentProject = this.project() as Project;
       this.projectForm.patchValue({
         name: currentProject.name,
@@ -68,48 +73,62 @@ export class ProjectFormComponent implements OnInit {
 
   onSubmit(): void {
     this.formError = null;
-    if (this.projectForm.valid) {
-      this.isLoading = true;
-      const currentUserId = this.authService.currentUser()?.id;
+    if (this.projectForm.invalid) {
+      return;
+    }
+    this.isLoading = true;
 
-      if (!currentUserId) {
-        this.formError = 'No user identifier. Please log in again.';
-        this.isLoading = false;
-        return;
-      }
+    const currentUserId = this.authService.currentUser()?.id;
+    if (!currentUserId) {
+      this.formError = 'No user identifier. Please log in again.';
+      this.isLoading = false;
+      return;
+    }
 
-      if (this.isEditing()) {
-        const projectId = (this.project() as Project).id;
-        const updateDto: UpdateProjectDto = this.projectForm.value;
-        this.projectService.updateProject(projectId, updateDto).subscribe({
+    if (this.isEditing()) {
+      // Edit mode
+      const updateDto: UpdateProjectDto = {
+        name: this.projectForm.value.name,
+        description: this.projectForm.value.description,
+        status: this.projectForm.value.status,
+      };
+      this.projectService
+        .updateProject(this.project()!.id, updateDto)
+        .subscribe({
           next: () => {
-            this.isLoading = false;
-            this.save.emit();
             alert('Project updated successfully!');
-          },
-          error: (err) => {
-            this.isLoading = false;
-            this.formError = `Update error: ${err.message || 'Unknown error'}`;
-          },
-        });
-      } else {
-        const createDto: CreateProjectDto = {
-          ...this.projectForm.value,
-          userId: currentUserId,
-        };
-        this.projectService.createProject(createDto).subscribe({
-          next: () => {
-            this.isLoading = false;
-            this.projectForm.reset();
             this.save.emit();
-            alert('Project added successfully!');
+            this.isLoading = false;
           },
           error: (err) => {
+            this.formError = `Update error: ${err.message || err}`;
             this.isLoading = false;
-            this.formError = `Add error: ${err.message || 'Unknown error'}`;
           },
         });
-      }
+    } else {
+      // Create mode
+      const createDto: CreateProjectDto = {
+        name: this.projectForm.value.name,
+        description: this.projectForm.value.description,
+        status: this.projectForm.value.status,
+        userId: currentUserId,
+      };
+      this.projectService.createProject(createDto).subscribe({
+        next: () => {
+          alert('Project added successfully!');
+          this.save.emit();
+          this.projectForm.reset({
+            name: null,
+            description: null,
+            status: ProjectStatus.Active,
+          });
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.formError = `Add error: ${err.message || err}`;
+          this.isLoading = false;
+        },
+      });
     }
   }
 }

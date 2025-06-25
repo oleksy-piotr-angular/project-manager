@@ -91,24 +91,23 @@ export class TaskService {
    */
   updateTask(taskId: string, dto: UpdateTaskDto): Observable<Task> {
     return this.apiService.patch<Task>(`tasks/${taskId}`, dto).pipe(
-      //  change form PUT to PATCH
       map(TaskMapper.fromDto),
-      tap((updatedTaskFromServer) => {
+      map((updatedTaskFromServer) => {
+        // Merge projectId from the original task if missing
+        const currentTasks = this._tasks();
+        const originalTask = currentTasks.find(
+          (task) => task.id === updatedTaskFromServer.id
+        );
+        const projectId: string =
+          updatedTaskFromServer.projectId ?? originalTask?.projectId ?? '';
+        return {
+          ...updatedTaskFromServer,
+          projectId,
+        };
+      }),
+      tap((mergedTask) => {
         this._tasks.update((tasks) =>
-          tasks.map((t) => {
-            if (t.id === updatedTaskFromServer.id) {
-              const originalTask = tasks.find((task) => task.id === t.id);
-              const projectId: string =
-                updatedTaskFromServer.projectId ??
-                originalTask?.projectId ??
-                '';
-              return {
-                ...updatedTaskFromServer,
-                projectId,
-              };
-            }
-            return t;
-          })
+          tasks.map((t) => (t.id === mergedTask.id ? mergedTask : t))
         );
       }),
       catchError((error) => {

@@ -203,7 +203,7 @@ describe('TaskFormComponent', () => {
   }));
 
   // Test that the form does not submit if it's invalid.
-  it('should not submit if form is invalid', () => {
+  it('should not submit if form is invalid', fakeAsync(() => {
     hostComponent.hostEditingTask = undefined;
     hostFixture.detectChanges();
     tick();
@@ -216,7 +216,7 @@ describe('TaskFormComponent', () => {
     component.onSubmit(); // Attempt to submit
 
     expect(hostComponent.savedTask).toBeUndefined(); // Nothing should have been emitted
-  });
+  }));
 
   // Test cancel button click.
   it('should emit cancel when cancel button is clicked', () => {

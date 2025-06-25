@@ -9,6 +9,8 @@ import { CreateTaskDto, UpdateTaskDto } from '../../dtos/task.dto'; // Imported 
 import { TaskMapper } from '../../mappers/task.mapper';
 import { CommonModule, NgIf, NgFor, TitleCasePipe } from '@angular/common';
 import { TaskFormComponent } from '../../components/task-form/task-form.component';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-project-details',
@@ -24,6 +26,11 @@ export class ProjectDetailsComponent implements OnInit {
   private taskService = inject(TaskService);
   private authService = inject(AuthService);
 
+  // Use a signal for projectId that reacts to route param changes
+  projectIdSignal = toSignal(
+    this.route.paramMap.pipe(map((paramMap) => paramMap.get('id'))),
+    { initialValue: null }
+  );
   projectId: string | null = null;
   project = signal<Project | undefined>(undefined);
   tasks = this.taskService.tasks; // Use the read-only signal from TaskService
@@ -32,11 +39,10 @@ export class ProjectDetailsComponent implements OnInit {
   editingTask = signal<Task | undefined>(undefined);
 
   constructor() {
-    // Effect to load project details and associated tasks when projectId changes
-    // or when the user logs in/out.
+    // Effect to load project details and associated tasks when projectId or user changes
     effect(
       () => {
-        this.projectId = this.route.snapshot.paramMap.get('id');
+        this.projectId = this.projectIdSignal();
         const currentUserId = this.authService.currentUser()?.id;
 
         if (this.projectId && currentUserId) {

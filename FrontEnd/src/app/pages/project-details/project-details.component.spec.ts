@@ -5,7 +5,7 @@ import {
   tick,
 } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, Subject, throwError, Observable } from 'rxjs'; // Import Observable here
+import { of, Subject, throwError, Observable } from 'rxjs';
 import { signal, WritableSignal } from '@angular/core';
 import { TaskStatus } from '../../models/task.model';
 
@@ -125,7 +125,10 @@ describe('ProjectDetailsComponent - Unit Tests', () => {
 
     // Configure spy return values for initial data loading
     projectServiceSpy.getProjectById.and.returnValue(of(mockProject));
-    taskServiceSpy.loadTasks.and.returnValue(of(mockTasks));
+    taskServiceSpy.loadTasks.and.callFake(() => {
+      testTasksSignal.set(mockTasks);
+      return of(mockTasks);
+    });
 
     // Configure callFakes to use the writable testTasksSignal
     taskServiceSpy.createTask.and.callFake((dto) => {
@@ -179,7 +182,10 @@ describe('ProjectDetailsComponent - Unit Tests', () => {
     // Reset testTasksSignal for this specific test to ensure loadTasks actually populates it
     testTasksSignal.set([]);
     projectServiceSpy.getProjectById.and.returnValue(of(mockProject));
-    taskServiceSpy.loadTasks.and.returnValue(of(mockTasks));
+    taskServiceSpy.loadTasks.and.callFake(() => {
+      testTasksSignal.set(mockTasks);
+      return of(mockTasks);
+    });
 
     // Re-trigger the effect to re-run load logic
     (activatedRouteStub.paramMap as Subject<any>).next({
@@ -198,10 +204,17 @@ describe('ProjectDetailsComponent - Unit Tests', () => {
   }));
 
   it('should navigate to dashboard if project not found', fakeAsync(() => {
+    // Make sure the mock returns undefined
     projectServiceSpy.getProjectById.and.returnValue(of(undefined));
+
+    // Reset component state to ensure the effect runs with the new mock
+    component.project.set(undefined);
+
+    // Re-trigger the effect by emitting a new paramMap value
     (activatedRouteStub.paramMap as Subject<any>).next({
       get: (key: string) => (key === 'id' ? mockProject.id : null),
     });
+
     fixture.detectChanges();
     tick();
 
@@ -211,29 +224,25 @@ describe('ProjectDetailsComponent - Unit Tests', () => {
   }));
 
   it('should set error message if project loading fails', fakeAsync(() => {
-    // 1. Make sure the mock returns an error
+    // Spy on console.error BEFORE triggering the effect
+    spyOn(console, 'error');
+
+    // Make sure the mock returns an error
     projectServiceSpy.getProjectById.and.returnValue(
       throwError(() => new Error('Project load error'))
     );
-    // 2. Spy console.error
-    spyOn(console, 'error');
 
-    // 3. Trigger a change ActivatedRoute (projectId)
+    // Reset component state to ensure the effect runs with the error mock
+    component.project.set(undefined);
+
+    // Re-trigger the effect by emitting a new paramMap value
     (activatedRouteStub.paramMap as Subject<any>).next({
       get: (key: string) => (key === 'id' ? mockProject.id : null),
     });
 
-    // 4. Detect changes and pass the time
+    // Detect changes and pass the time
     fixture.detectChanges(); // Should trigger an effect
     tick(); // Allow the subscription to end with an error
-
-    // Potentially, if effect or subscription has additional microtasks, we need another tick()
-
-    // Although rare, worth a try for diagnostics
-
-    // fixture.detectChanges(); // Optional if previous tick() didn't catch all changes
-
-    // tick(); // Optional if previous tick() didn't catch all changes
 
     // Assertions
     expect(projectServiceSpy.getProjectById).toHaveBeenCalled();
@@ -358,7 +367,7 @@ describe('ProjectDetailsComponent - Unit Tests', () => {
   it('should display task status correctly', () => {
     expect(component.getTaskStatusDisplayName('todo')).toBe('Todo');
     expect(component.getTaskStatusDisplayName('in_progress')).toBe(
-      'In Progress'
+      'In progress'
     );
     expect(component.getTaskStatusDisplayName('done')).toBe('Done');
   });
@@ -375,10 +384,14 @@ describe('ProjectDetailsComponent - Integration Tests', () => {
   let fixture: ComponentFixture<ProjectDetailsComponent>;
   let projectService: ProjectService;
   let taskService: TaskService;
-  let authService: AuthService;
   let apiServiceSpy: jasmine.SpyObj<ApiService>;
   let activatedRouteStub: any;
   let routerSpy: jasmine.SpyObj<Router>;
+
+  // Added signals to control authentication state
+  let currentUserWritableSignal: WritableSignal<User | null>;
+  let isAuthenticatedWritableSignal: WritableSignal<boolean>;
+  let authServiceSpy: jasmine.SpyObj<AuthService>; // AuthService spy declaration
 
   const initialProject: Project = {
     id: 'p1_int',
@@ -414,7 +427,8 @@ describe('ProjectDetailsComponent - Integration Tests', () => {
     password: 'pwd',
   });
 
-  beforeEach(async () => {
+  beforeEach(fakeAsync(async () => {
+    // Changed to fakeAsync
     apiServiceSpy = jasmine.createSpyObj('ApiService', [
       'get',
       'post',
@@ -431,6 +445,20 @@ describe('ProjectDetailsComponent - Integration Tests', () => {
       },
     };
 
+    // --- KEY CHANGE HERE: Mocking signals in AuthService ---
+    currentUserWritableSignal = signal<User | null>(mockUserForIntTest);
+    isAuthenticatedWritableSignal = signal<boolean>(true);
+
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout'], {
+      isAuthenticated: isAuthenticatedWritableSignal.asReadonly(),
+      currentUser: currentUserWritableSignal.asReadonly(),
+    });
+    authServiceSpy.logout.and.callFake(() => {
+      isAuthenticatedWritableSignal.set(false);
+      currentUserWritableSignal.set(null);
+    });
+    // --- END OF KEY CHANGE ---
+
     await TestBed.configureTestingModule({
       imports: [ProjectDetailsComponent],
       providers: [
@@ -438,7 +466,7 @@ describe('ProjectDetailsComponent - Integration Tests', () => {
         { provide: Router, useValue: routerSpy },
         ProjectService,
         TaskService,
-        AuthService,
+        { provide: AuthService, useValue: authServiceSpy }, // Now providing our new spy for AuthService
         { provide: ApiService, useValue: apiServiceSpy },
       ],
     }).compileComponents();
@@ -447,9 +475,8 @@ describe('ProjectDetailsComponent - Integration Tests', () => {
     component = fixture.componentInstance;
     projectService = TestBed.inject(ProjectService);
     taskService = TestBed.inject(TaskService);
-    authService = TestBed.inject(AuthService);
 
-    // Mock ApiService responses - KEY CHANGE HERE
+    // Mock ApiService responses
     apiServiceSpy.get.and.callFake(<T>(path: string): Observable<T> => {
       if (path.includes(`projects/${initialProject.id}`)) {
         return of(initialProject as T);
@@ -468,18 +495,19 @@ describe('ProjectDetailsComponent - Integration Tests', () => {
     );
     apiServiceSpy.delete.and.returnValue(of(undefined));
 
-    spyOn(authService.currentUser, 'set').and.callThrough();
-    spyOn(authService.isAuthenticated, 'set').and.callThrough();
-    authService.currentUser.set(mockUserForIntTest);
-    authService.isAuthenticated.set(true);
-
     // Trigger the effect by emitting a value
     (activatedRouteStub.paramMap as Subject<any>).next({
       get: (key: string) => (key === 'id' ? initialProject.id : null),
     });
 
     fixture.detectChanges();
-  });
+    tick(); // KEY: allow all subscriptions and effects to process
+  }));
+
+  // Add afterEach to ensure tick() is always called and cleans up async state
+  afterEach(fakeAsync(() => {
+    tick(100); // Small tick to ensure all microtasks are finished
+  }));
 
   it('should load project and tasks and update component signals correctly', fakeAsync(() => {
     expect(component.project()).toEqual(initialProject);
@@ -555,6 +583,9 @@ describe('ProjectDetailsComponent - Integration Tests', () => {
     component.deleteTask(initialTasks[0].id);
     tick();
 
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Are you sure you want to delete this task?'
+    );
     expect(apiServiceSpy.delete).toHaveBeenCalledWith(
       `tasks/${initialTasks[0].id}`
     );

@@ -295,8 +295,8 @@ describe('ProjectFormComponent', () => {
 
   // Test that onSubmit does not proceed if form is invalid.
   it('should not submit if form is invalid', () => {
-    spyOn(projectServiceSpy, 'createProject');
-    spyOn(projectServiceSpy, 'updateProject');
+    expect(projectServiceSpy.createProject).not.toHaveBeenCalled();
+    expect(projectServiceSpy.updateProject).not.toHaveBeenCalled();
 
     component.projectForm.controls['name'].setValue('');
     component.projectForm.controls['description'].setValue('');
