@@ -1,30 +1,68 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TaskFormComponent } from './task-form.component';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { Task } from '../../models/task.model'; // For type annotation only
+import { TaskFormComponent } from './task-form.component';
+import { Task } from '../../models/task.model';
+import { Component, DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+
+// --- Test Host Component ---
+// This host component simulates a parent component that interacts with TaskFormComponent.
+// It provides inputs ([projectId], [editingTask]) and listens to outputs ((taskSaved), (cancel)).
+@Component({
+  template: `
+    <app-task-form
+      [projectId]="hostProjectId"
+      [editingTask]="hostEditingTask"
+      (taskSaved)="onTaskSaved($event)"
+      (cancel)="onCancel()"
+    >
+    </app-task-form>
+  `,
+  standalone: true,
+  imports: [TaskFormComponent], // Import the component being tested
+})
+class TestHostComponent {
+  hostProjectId: string = 'testProjectId'; // Default value for the required projectId input
+  hostEditingTask: Task | undefined; // Input for editing an existing task
+  savedTask: Partial<Task> | undefined; // Stores the data emitted by taskSaved output
+  cancelled = false; // Flag to check if the cancel event was emitted
+
+  onTaskSaved(task: Partial<Task>) {
+    // Handler for the taskSaved event
+    this.savedTask = task;
+  }
+  onCancel() {
+    // Handler for the cancel event
+    this.cancelled = true;
+  }
+}
 
 describe('TaskFormComponent', () => {
-  let component: TaskFormComponent;
-  let fixture: ComponentFixture<TaskFormComponent>;
-
-  const mockTask: Task = {
-    id: 't1',
-    projectId: 'p1',
-    title: 'Existing Task',
-    description: 'Existing description',
-    status: 'in_progress' as 'in_progress',
-    dueDate: '2025-08-01',
-  };
+  let hostFixture: ComponentFixture<TestHostComponent>;
+  let hostComponent: TestHostComponent;
+  let component: TaskFormComponent; // The actual instance of TaskFormComponent
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TaskFormComponent, ReactiveFormsModule, CommonModule],
+      imports: [TaskFormComponent, ReactiveFormsModule, TestHostComponent], // Import TestHostComponent for proper input/output testing
+      // TaskFormComponent does not inject any services in its current implementation,
+      // so we don't need to provide service mocks here.
     }).compileComponents();
 
-    fixture = TestBed.createComponent(TaskFormComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges(); // Initialize the component
+    hostFixture = TestBed.createComponent(TestHostComponent);
+    hostComponent = hostFixture.componentInstance;
+    // Get the instance of the TaskFormComponent from the host fixture's debug element
+    const taskFormDebugElement: DebugElement = hostFixture.debugElement.query(
+      By.directive(TaskFormComponent)
+    );
+    component = taskFormDebugElement.componentInstance;
+
+    hostFixture.detectChanges(); // Initial change detection for the host component and its child
   });
 
   // Test that the component is created successfully.
@@ -32,127 +70,157 @@ describe('TaskFormComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  // Test form initialization when adding a new task.
-  it('should initialize form for adding a new task', () => {
-    component.projectId = 'new_project_id'; // Set required projectId input
-    component.ngOnInit(); // Manually call ngOnInit for input change detection
+  // Test form initialization for creation mode.
+  it('should initialize form for creation mode', fakeAsync(() => {
+    hostComponent.hostEditingTask = undefined; // Ensure we are in creation mode by setting the input to undefined
+    hostFixture.detectChanges(); // Trigger change detection to update component inputs
+    tick(); // Process any asynchronous operations (like ngOnInit completing)
+
     expect(component.taskForm).toBeDefined();
-    expect(component.taskForm.controls['title'].value).toBe('');
-    expect(component.taskForm.controls['description'].value).toBe('');
-    expect(component.taskForm.controls['status'].value).toBe('todo'); // Default status
-    expect(component.taskForm.controls['dueDate'].value).toBe('');
-    expect(component.taskForm.valid).toBeFalse(); // Title is required
-  });
-
-  // Test form initialization when editing an existing task.
-  it('should initialize form for editing an existing task', () => {
-    component.projectId = 'existing_project_id';
-    component.editingTask = mockTask; // Set editingTask input
-    component.ngOnInit(); // Manually call ngOnInit
-    fixture.detectChanges();
-
-    // Verify form fields are populated with existing task data
-    expect(component.taskForm.controls['title'].value).toBe(mockTask.title);
-    expect(component.taskForm.controls['description'].value).toBe(
-      mockTask.description
-    );
-    expect(component.taskForm.controls['status'].value).toBe(mockTask.status);
-    expect(component.taskForm.controls['dueDate'].value).toBe(mockTask.dueDate);
-    expect(component.taskForm.valid).toBeTrue(); // Should be valid with pre-filled data
-  });
-
-  // Test form re-initialization when editingTask input changes using ngOnChanges.
-  it('should re-initialize form when editingTask input changes', () => {
-    component.projectId = 'p_test';
-    component.editingTask = undefined; // Start with no editing task
-    component.ngOnInit();
-    fixture.detectChanges();
-    expect(component.taskForm.controls['title'].value).toBe(''); // Verify initial empty state
-
-    component.editingTask = mockTask; // Change editingTask input
-    component.ngOnChanges({
-      editingTask: {
-        currentValue: mockTask,
-        previousValue: undefined,
-        firstChange: false,
-        isFirstChange: () => false,
-      },
+    expect(component.taskForm.value).toEqual({
+      title: '',
+      description: '',
+      status: 'todo', // Default status as per component's initForm
+      dueDate: '',
     });
-    fixture.detectChanges();
-    expect(component.taskForm.controls['title'].value).toBe(mockTask.title); // Verify form updated with mockTask data
+    expect(component.taskForm.valid).toBeFalse(); // Form should be invalid initially due to required fields
+  }));
+
+  // Test form initialization for editing mode with an existing task.
+  it('should initialize form for editing mode with existing task', fakeAsync(() => {
+    const editTask: Task = {
+      id: 't1',
+      projectId: 'p1',
+      title: 'Edit Task',
+      description: 'Edit Desc',
+      status: 'in_progress',
+      dueDate: '2025-07-15',
+    };
+    hostComponent.hostEditingTask = editTask; // Set the editingTask input on the host component
+    hostFixture.detectChanges(); // Trigger change detection
+    tick(); // Process async operations (like ngOnChanges and initForm)
+
+    expect(component.taskForm.value).toEqual({
+      title: editTask.title,
+      description: editTask.description,
+      status: editTask.status,
+      dueDate: editTask.dueDate,
+    });
+    expect(component.taskForm.valid).toBeTrue(); // Form should be valid with pre-filled valid data
+  }));
+
+  // Test form validity with valid data.
+  it('should be valid with valid data', () => {
+    component.taskForm.controls['title'].setValue('Valid Title');
+    component.taskForm.controls['description'].setValue('Valid Description');
+    component.taskForm.controls['status'].setValue('done');
+    component.taskForm.controls['dueDate'].setValue('2025-08-01');
+    expect(component.taskForm.valid).toBeTrue();
   });
 
-  // Test emitting taskSaved event with new task data on form submission.
-  it('should emit taskSaved event with new task data on submit', () => {
-    spyOn(component.taskSaved, 'emit'); // Spy on the output event emitter
-    component.projectId = 'new_project_id';
-    component.ngOnInit();
+  // Test form invalidity with missing title.
+  it('should be invalid with missing title', () => {
+    component.taskForm.controls['title'].setValue('');
+    component.taskForm.controls['description'].setValue('Valid Description');
+    component.taskForm.controls['status'].setValue('todo');
+    component.taskForm.controls['dueDate'].setValue('2025-08-01');
+    expect(component.taskForm.invalid).toBeTrue();
+    expect(
+      component.taskForm.controls['title'].hasError('required')
+    ).toBeTrue();
+  });
 
-    const newTaskData: Task = {
-      // Task used for type annotation
-      id: 'as34r5df', // ID is generated later, but included for structure
-      projectId: component.projectId,
+  // Test form invalidity with missing description.
+  it('should be invalid with missing description', () => {
+    component.taskForm.controls['title'].setValue('Valid Title');
+    component.taskForm.controls['description'].setValue('');
+    component.taskForm.controls['status'].setValue('todo');
+    component.taskForm.controls['dueDate'].setValue('2025-08-01');
+    expect(component.taskForm.invalid).toBeTrue();
+    expect(
+      component.taskForm.controls['description'].hasError('required')
+    ).toBeTrue();
+  });
+
+  // Test that taskSaved event is emitted with new task data on valid submission.
+  it('should emit taskSaved event with new task data on submit', fakeAsync(() => {
+    hostComponent.hostEditingTask = undefined; // Set to creation mode
+    hostFixture.detectChanges();
+    tick();
+
+    component.taskForm.controls['title'].setValue('New Task Title');
+    component.taskForm.controls['description'].setValue('New Task Description');
+    component.taskForm.controls['status'].setValue('todo');
+    component.taskForm.controls['dueDate'].setValue('2025-09-01');
+
+    component.onSubmit(); // Trigger form submission
+    tick(); // Process any asynchronous operations
+
+    // Expect the emitted data to be Partial<Task> as defined by the component's output
+    const expectedTaskData: Partial<Task> = {
       title: 'New Task Title',
       description: 'New Task Description',
       status: 'todo',
       dueDate: '2025-09-01',
     };
-    // Fill the form with new task data
-    component.taskForm.controls['title'].setValue(newTaskData.title);
+
+    expect(hostComponent.savedTask).toEqual(expectedTaskData);
+  }));
+
+  // Test that taskSaved event is emitted with updated task data on valid submission.
+  it('should emit taskSaved event with updated task data on submit', fakeAsync(() => {
+    const editTask: Task = {
+      id: 't1',
+      projectId: 'p1',
+      title: 'Original Title',
+      description: 'Original Desc',
+      status: 'todo',
+      dueDate: '2025-07-15',
+    };
+    hostComponent.hostEditingTask = editTask; // Set to editing mode
+    hostFixture.detectChanges();
+    tick();
+
+    component.taskForm.controls['title'].setValue('Updated Task Title');
     component.taskForm.controls['description'].setValue(
-      newTaskData.description
+      'Updated Task Description'
     );
-    component.taskForm.controls['status'].setValue(newTaskData.status);
-    component.taskForm.controls['dueDate'].setValue(newTaskData.dueDate);
+    component.taskForm.controls['status'].setValue('in_progress');
+    component.taskForm.controls['dueDate'].setValue('2025-07-30');
 
-    component.onSubmit(); // Submit the form
+    component.onSubmit(); // Trigger form submission
+    tick(); // Process any asynchronous operations
 
-    // Verify taskSaved event was emitted with the correct data
-    expect(component.taskSaved.emit).toHaveBeenCalledWith(
-      jasmine.objectContaining(newTaskData)
-    );
+    // Expect the emitted data to be Partial<Task> as defined by the component's output
+    const expectedTaskData: Partial<Task> = {
+      title: 'Updated Task Title',
+      description: 'Updated Task Description',
+      status: 'in_progress',
+      dueDate: '2025-07-30',
+    };
+
+    expect(hostComponent.savedTask).toEqual(expectedTaskData);
+  }));
+
+  // Test that the form does not submit if it's invalid.
+  it('should not submit if form is invalid', () => {
+    hostComponent.hostEditingTask = undefined;
+    hostFixture.detectChanges();
+    tick();
+
+    component.taskForm.controls['title'].setValue(''); // Make form invalid
+    component.taskForm.controls['description'].setValue(''); // Make form invalid
+    component.taskForm.controls['status'].setValue('todo');
+    component.taskForm.controls['dueDate'].setValue('2025-09-01');
+
+    component.onSubmit(); // Attempt to submit
+
+    expect(hostComponent.savedTask).toBeUndefined(); // Nothing should have been emitted
   });
 
-  // Test emitting taskSaved event with updated task data on form submission.
-  it('should emit taskSaved event with updated task data on submit', () => {
-    spyOn(component.taskSaved, 'emit');
-    component.projectId = 'existing_project_id';
-    component.editingTask = mockTask; // Set editingTask to simulate editing
-    component.ngOnInit();
-
-    const updatedTitle = 'Updated Title';
-    component.taskForm.controls['title'].setValue(updatedTitle); // Update only the title
-
-    component.onSubmit();
-
-    // Verify taskSaved event was emitted with updated data, preserving other fields
-    expect(component.taskSaved.emit).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        id: mockTask.id, // ID should be preserved for editing
-        projectId: mockTask.projectId,
-        title: updatedTitle,
-        description: mockTask.description,
-        status: mockTask.status,
-        dueDate: mockTask.dueDate,
-      })
-    );
-  });
-
-  // Test that taskSaved is NOT emitted if the form is invalid.
-  it('should not emit taskSaved if form is invalid', () => {
-    spyOn(component.taskSaved, 'emit');
-    component.projectId = 'p1';
-    component.ngOnInit();
-    // Form is invalid by default because 'title' is required and empty
-    component.onSubmit();
-    expect(component.taskSaved.emit).not.toHaveBeenCalled(); // Verify event was not emitted
-    expect(component.taskForm.get('title')?.touched).toBeTrue(); // Verify field is marked as touched for validation feedback
-  });
-
-  // Test emitting cancel event on cancel button click.
-  it('should emit cancel event on cancel button click', () => {
-    spyOn(component.cancel, 'emit'); // Spy on the cancel output event emitter
-    component.onCancel(); // Call the cancel method
-    expect(component.cancel.emit).toHaveBeenCalled(); // Verify cancel event was emitted
+  // Test cancel button click.
+  it('should emit cancel when cancel button is clicked', () => {
+    component.onCancel(); // Call the component's method that emits the 'cancel' output
+    expect(hostComponent.cancelled).toBeTrue(); // Check if the host component received the event
   });
 });
