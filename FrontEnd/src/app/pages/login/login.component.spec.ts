@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
@@ -56,44 +61,48 @@ describe('LoginComponent', () => {
     expect(passwordControl.hasError('required')).toBeTrue();
   });
 
-  // Test displaying an alert message on failed login.
-  it('should display an error message on failed login', () => {
-    spyOn(window, 'alert'); // Spy on window.alert
-    authServiceSpy.login.and.returnValue(of(null)); // Mock login to return null (failure)
+  // Test displaying an error message on failed login due to invalid credentials.
+  it('should display an error message on failed login due to invalid credentials', fakeAsync(() => {
+    // Added fakeAsync
+    authServiceSpy.login.and.returnValue(of(null)); // Mock login to return null (failure: invalid credentials)
 
     // Set form values and submit
     component.loginForm.controls['email'].setValue('test@example.com');
     component.loginForm.controls['password'].setValue('wrongpassword');
     component.onSubmit();
+    tick(); // Advance the async operations
 
-    // Verify AuthService.login was called and an alert was shown
+    // Verify AuthService.login was called and loginError was set
     expect(authServiceSpy.login).toHaveBeenCalled();
-    expect(window.alert).toHaveBeenCalledWith(
-      'Login failed. Please check your credentials.'
-    );
+    expect(component.loginError).toBe('Invalid email or password.'); // Check loginError property
+    expect(component.isLoading).toBeFalse(); // Verify loading state is false
     expect(routerSpy.navigate).not.toHaveBeenCalled(); // Ensure no navigation on failure
-  });
+  }));
 
   // Test navigation to dashboard on successful login.
-  it('should navigate to dashboard on successful login', () => {
+  it('should navigate to dashboard on successful login', fakeAsync(() => {
+    // Added fakeAsync
     const mockResponse: LoginResponseDto = {
       token: 'mock-token',
       userId: 'user1',
-    }; // LoginResponseDto used for type annotation
+    };
     authServiceSpy.login.and.returnValue(of(mockResponse)); // Mock login to return a successful response
 
     // Set form values and submit
     component.loginForm.controls['email'].setValue('test@example.com');
     component.loginForm.controls['password'].setValue('password123');
     component.onSubmit();
+    tick(); // Advance the async operations
 
     // Verify AuthService.login was called and navigated to dashboard
     expect(authServiceSpy.login).toHaveBeenCalled();
+    expect(component.isLoading).toBeFalse(); // Verify loading state is false
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/dashboard']);
-  });
+  }));
 
   // Test submit button disabled state based on form validity.
   it('should disable submit button when form is invalid', () => {
+    // No need for fakeAsync/tick here as this is synchronous DOM/form interaction
     fixture.detectChanges();
     const submitButton: HTMLButtonElement = fixture.nativeElement.querySelector(
       'button[type="submit"]'
@@ -110,8 +119,8 @@ describe('LoginComponent', () => {
   });
 
   // Test handling of API error during login.
-  it('should handle API error during login', () => {
-    spyOn(window, 'alert'); // Spy on window.alert
+  it('should handle API error during login', fakeAsync(() => {
+    // Added fakeAsync
     authServiceSpy.login.and.returnValue(
       throwError(() => new Error('Network error'))
     ); // Mock login to throw an error
@@ -120,12 +129,12 @@ describe('LoginComponent', () => {
     component.loginForm.controls['email'].setValue('test@example.com');
     component.loginForm.controls['password'].setValue('password123');
     component.onSubmit();
+    tick(); // Advance the async operations to allow the error handler to run
 
     // Verify AuthService.login was called and a generic error alert was shown
     expect(authServiceSpy.login).toHaveBeenCalled();
-    expect(window.alert).toHaveBeenCalledWith(
-      'An error occurred during login. Please try again.'
-    );
+    expect(component.loginError).toBe('Network error'); // Check loginError property
+    expect(component.isLoading).toBeFalse(); // Verify loading state is false
     expect(routerSpy.navigate).not.toHaveBeenCalled(); // Ensure no navigation on error
-  });
+  }));
 });
