@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ProjectService } from './project.service';
 import { ApiService } from './api.service';
-import { Project } from '../models/project.model';
+import { Project, ProjectStatus } from '../models/project.model';
 import { CreateProjectDto, UpdateProjectDto } from '../dtos/project.dto';
 import { ProjectMapper } from '../mappers/project.mapper';
 import { of, throwError } from 'rxjs';
@@ -253,13 +253,13 @@ describe('ProjectService', () => {
         ...mockProject1,
         id: 'p3',
         name: 'Another active Proj',
-        status: 'active',
+        status: ProjectStatus.Active,
       },
       {
         ...mockProject2,
         id: 'p4',
         name: 'Another completed Proj',
-        status: 'completed',
+        status: ProjectStatus.Completed,
       },
     ]);
 
@@ -273,7 +273,7 @@ describe('ProjectService', () => {
         ...mockProject1,
         id: 'p3',
         name: 'Another active Proj',
-        status: 'active',
+        status: ProjectStatus.Active,
       },
     ]);
   });

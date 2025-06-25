@@ -13,7 +13,7 @@ import { ProjectDetailsComponent } from './project-details.component';
 import { ProjectService } from '../../services/project.service';
 import { TaskService } from '../../services/task.service';
 import { AuthService } from '../../services/auth.service';
-import { Project } from '../../models/project.model';
+import { Project, ProjectStatus } from '../../models/project.model';
 import { Task } from '../../models/task.model';
 import { User } from '../../models/user.model';
 import { UserMapper } from '../../mappers/user.mapper';
@@ -25,7 +25,7 @@ const mockProject: Project = {
   userId: 'u1',
   name: 'Test Project',
   description: 'Project description',
-  status: 'active',
+  status: ProjectStatus.Active,
 };
 
 const mockTasks: Task[] = [
@@ -371,7 +371,7 @@ describe('ProjectDetailsComponent - Integration Tests', () => {
     userId: 'u1_int',
     name: 'Integration Project',
     description: 'Integration project description',
-    status: 'active',
+    status: ProjectStatus.Active,
   };
 
   const initialTasks: Task[] = [
