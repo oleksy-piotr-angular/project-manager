@@ -5,7 +5,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { ApiService } from './api.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http'; // For type annotation only
 
 describe('ApiService', () => {
   let service: ApiService;
@@ -104,6 +104,7 @@ describe('ApiService', () => {
     service.get<any>(path).subscribe({
       next: () => fail('should have failed with the 500 error'), // Should not reach here
       error: (error: HttpErrorResponse) => {
+        // HttpErrorResponse used for type annotation
         expect(error.message).toContain('Something went wrong'); // Check the custom error message
         expect(console.error).toHaveBeenCalledWith(
           `Backend returned code 500, body was: {}` // Verify logged message
@@ -128,6 +129,7 @@ describe('ApiService', () => {
     service.post<any>(path, testData).subscribe({
       next: () => fail('should have failed with the 400 error'), // Should not reach here
       error: (error: HttpErrorResponse) => {
+        // HttpErrorResponse used for type annotation
         expect(error.message).toContain('Something went wrong'); // Check the custom error message
         expect(console.error).toHaveBeenCalledWith(
           `Backend returned code 400, body was: {"message":"Bad Request"}` // Verify logged message
