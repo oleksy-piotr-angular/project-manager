@@ -17,6 +17,7 @@ export class ProjectMapper {
       name: project.name || '',
       description: project.description || '',
       userId: project.userId || '',
+      status: project.status || 'active', // Default to 'active' if not provided
     };
   }
 }
