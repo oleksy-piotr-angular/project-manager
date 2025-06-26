@@ -1,4 +1,12 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  effect,
+  Injector,
+  runInInjectionContext,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
 import { TaskService } from '../../services/task.service';
@@ -38,52 +46,55 @@ export class ProjectDetailsComponent implements OnInit {
   showTaskForm = signal(false);
   editingTask = signal<Task | undefined>(undefined);
 
-  constructor() {
-    // Effect to load project details and associated tasks when projectId or user changes
-    effect(
-      () => {
-        this.projectId = this.projectIdSignal();
-        const currentUserId = this.authService.currentUser()?.id;
-
-        if (this.projectId && currentUserId) {
-          // Load project details
-          this.projectService.getProjectById(this.projectId).subscribe({
-            next: (proj) => {
-              if (proj && proj.userId === currentUserId) {
-                this.project.set(proj);
-                // Load tasks for this project
-                this.taskService.loadTasks(this.projectId!).subscribe({
-                  next: () =>
-                    console.log('Tasks loaded for project:', this.projectId),
-                  error: (err) =>
-                    console.error('Failed to load tasks for project:', err),
-                });
-              } else {
-                console.warn(
-                  'Project not found or does not belong to the current user.'
-                );
-                this.router.navigate(['/dashboard']); // Redirect if project not found or unauthorized
-              }
-            },
-            error: (err) => {
-              console.error('Failed to load project details:', err);
-              this.router.navigate(['/dashboard']); // Redirect on error
-            },
-          });
-        } else if (!this.projectId) {
-          console.warn('No Project ID provided in URL.');
-          this.router.navigate(['/dashboard']);
-        } else if (!currentUserId) {
-          console.warn('User not authenticated, cannot load project details.');
-          this.router.navigate(['/login']); // Or simply clear state
-        }
-      },
-      { allowSignalWrites: true }
-    );
-  }
+  constructor(private injector: Injector) {}
 
   ngOnInit(): void {
-    // Initial loading is handled by the effect in the constructor.
+    runInInjectionContext(this.injector, () => {
+      // Effect to load project details and associated tasks when projectId or user changes
+      effect(
+        () => {
+          this.projectId = this.projectIdSignal();
+          const currentUserId = this.authService.currentUser()?.id;
+
+          if (this.projectId && currentUserId) {
+            // Load project details
+            this.projectService.getProjectById(this.projectId).subscribe({
+              next: (proj) => {
+                if (proj && proj.userId === currentUserId) {
+                  this.project.set(proj);
+                  // Load tasks for this project
+                  this.taskService.loadTasks(this.projectId!).subscribe({
+                    next: () =>
+                      console.log('Tasks loaded for project:', this.projectId),
+                    error: (err) =>
+                      console.error('Failed to load tasks for project:', err),
+                  });
+                } else {
+                  console.warn(
+                    'Project not found or does not belong to the current user.'
+                  );
+                  this.router.navigate(['/dashboard']); // Redirect if project not found or unauthorized
+                }
+              },
+              error: (err) => {
+                console.error('Failed to load project details:', err);
+                this.project.set(undefined); // Clear project state on error
+                this.router.navigate(['/dashboard']);
+              },
+            });
+          } else if (!this.projectId) {
+            console.warn('No Project ID provided in URL.');
+            this.router.navigate(['/dashboard']);
+          } else if (!currentUserId) {
+            console.warn(
+              'User not authenticated, cannot load project details.'
+            );
+            this.router.navigate(['/login']); // Or simply clear state
+          }
+        },
+        { allowSignalWrites: true }
+      );
+    });
   }
 
   /**
