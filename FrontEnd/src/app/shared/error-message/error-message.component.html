@@ -3,24 +3,24 @@
   class="error-message"
 >
   <ng-container *ngIf="control.errors?.['required']"
-    >To pole jest wymagane.</ng-container
+    >This field is required.</ng-container
   >
   <ng-container *ngIf="control.errors?.['email']"
-    >Wprowadź prawidłowy adres e-mail.</ng-container
+    >Enter a valid email address.</ng-container
   >
   <ng-container *ngIf="control.errors?.['customEmail']"
-    >Nieprawidłowy format e-mail.</ng-container
+    >Invalid email format.</ng-container
   >
   <ng-container *ngIf="control.errors?.['minlength']"
-    >Wymagane minimum
-    {{ control.errors?.['minlength'].requiredLength }} znaków.</ng-container
+    >Minimum {{ control.errors?.['minlength'].requiredLength }} characters
+    required.</ng-container
   >
   <ng-container *ngIf="control.errors?.['maxlength']"
-    >Maksimum
-    {{ control.errors?.['maxlength'].requiredLength }} znaków.</ng-container
+    >Maximum {{ control.errors?.['maxlength'].requiredLength }} characters
+    allowed.</ng-container
   >
   <ng-container
     *ngIf="control.errors?.['pattern'] && !control.errors?.['customEmail']"
-    >Nieprawidłowy format.</ng-container
+    >Invalid format.</ng-container
   >
 </div>
